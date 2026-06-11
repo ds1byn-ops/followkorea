@@ -106,6 +106,31 @@ tr:hover td{background:#fafaf8;}
   .tab{padding:7px 7px;font-size:10px;}
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPA_URL = 'https://tbrtfccvsvtusfkqdyow.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRicnRmY2N2c3Z0dXNma3FkeW93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNDk1MTksImV4cCI6MjA5NjcyNTUxOX0.cs_hfXJle5cEPbjcSFAMd4P0uAyG-8x_jkvjMA8ipVQ';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ── Supabase DB 헬퍼 ──
+async function dbLoad(table){
+  const {data,error} = await supa.from(table).select('*').order('id',{ascending:true});
+  if(error){console.error(table,'load error',error);return null;}
+  return data.map(r=>r.data);
+}
+async function dbSave(table, rows){
+  // 기존 전체 삭제 후 재삽입 (단순 전략)
+  await supa.from(table).delete().neq('id',0);
+  if(!rows||rows.length===0)return;
+  const inserts = rows.map(r=>({data:r}));
+  const {error} = await supa.from(table).insert(inserts);
+  if(error) console.error(table,'save error',error);
+}
+async function dbSaveOne(table, row){
+  const {error} = await supa.from(table).insert([{data:row}]);
+  if(error) console.error(table,'saveOne error',error);
+}
+</script>
 </head>
 <body>
 
@@ -618,8 +643,26 @@ function loadWmData(){
   }catch(e){}
 }
 
-function initApp(){
-  loadWmData();
+async function initApp(){
+  // DB에서 데이터 로드
+  showLoading(true);
+  try{
+    const [bkData, wmData, hdData] = await Promise.all([
+      dbLoad('bookings'),
+      dbLoad('wanghongs'),
+      dbLoad('hospitals')
+    ]);
+    if(bkData && bkData.length>0) BK=bkData;
+    if(wmData && wmData.length>0) WM=wmData;
+    if(hdData && hdData.length>0){
+      // HD는 no 기준으로 기존 데이터에 병합 (계약상태 등 업데이트)
+      hdData.forEach(saved=>{
+        const idx=HD.findIndex(h=>h.no===saved.no);
+        if(idx>=0) HD[idx]={...HD[idx],...saved};
+      });
+    }
+  }catch(e){ console.warn('DB 로드 실패, 기본 데이터 사용', e); }
+  showLoading(false);
   // 신상성형외과 맨 위, 나머지 가나다순
   const sorted=[...HD].sort((a,b)=>{
     if(a.name===STAR_HOSP)return -1;
@@ -648,6 +691,20 @@ function updateInflowSel(){
   });
   if(!sel.options.length){const o=document.createElement('option');o.value='';o.textContent='(해당없음)';sel.appendChild(o);}
   calcPreview();
+}
+
+
+// ── 로딩 표시 ──
+function showLoading(show){
+  let el=document.getElementById('loading-overlay');
+  if(!el){
+    el=document.createElement('div');
+    el.id='loading-overlay';
+    el.style.cssText='position:fixed;inset:0;background:rgba(26,26,26,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;';
+    el.innerHTML='<div style="color:#fff;font-size:14px;text-align:center;"><div style="font-size:28px;margin-bottom:12px;">⏳</div>데이터 불러오는 중...</div>';
+    document.body.appendChild(el);
+  }
+  el.style.display=show?'flex':'none';
 }
 
 // ── 생년월일 자동 포맷 (8자리 → YYYY-MM-DD) ──
@@ -857,13 +914,17 @@ function saveBk(){
   if(!obj.name){alert('환자명을 입력하세요');return;}
   if(bkEditId){const i=BK.findIndex(b=>b.id===bkEditId);BK[i]={...BK[i],...obj};}
   else{obj.id=BK.reduce((m,b)=>Math.max(m,b.id),0)+1;BK.push(obj);}
-  closeModal('bk-modal');filterBookings();refreshAll();
+  closeModal('bk-modal');
+  filterBookings();refreshAll();
+  dbSave('bookings', BK).catch(e=>console.error(e));
 }
 
 function deleteBk(){
   if(!bkEditId||!confirm('이 예약을 삭제하시겠습니까?'))return;
   BK=BK.filter(b=>b.id!==bkEditId);
-  closeModal('bk-modal');filterBookings();refreshAll();
+  closeModal('bk-modal');
+  filterBookings();refreshAll();
+  dbSave('bookings', BK).catch(e=>console.error(e));
 }
 
 // ── 캘린더 ──
@@ -1072,6 +1133,8 @@ function saveHospital(){
   };
   closeModal('hd-modal');
   filterHospitals();
+  // 변경된 병원 정보만 저장
+  dbSave('hospitals', HD).catch(e=>console.error(e));
 }
 
 // ── 병원별 매출/입금 ──
@@ -1188,11 +1251,15 @@ function saveWm(){
   if(!obj.name){alert('이름을 입력하세요');return;}
   if(wmEditId){const i=WM.findIndex(w=>w.id===wmEditId);WM[i]={...WM[i],...obj};}
   else{obj.id=WM.reduce((m,w)=>Math.max(m,w.id),0)+1;WM.push(obj);}
-  closeModal('wm-modal');saveWmData();renderWm();updateInflowSel();
+  closeModal('wm-modal');
+  saveWmData();renderWm();updateInflowSel();
+  dbSave('wanghongs', WM).catch(e=>console.error(e));
 }
 function deleteWm(){
   if(!wmEditId||!confirm('삭제하시겠습니까?'))return;
-  WM=WM.filter(w=>w.id!==wmEditId);closeModal('wm-modal');saveWmData();renderWm();updateInflowSel();
+  WM=WM.filter(w=>w.id!==wmEditId);closeModal('wm-modal');
+  saveWmData();renderWm();updateInflowSel();
+  dbSave('wanghongs', WM).catch(e=>console.error(e));
 }
 
 // ── 대시보드 ──
@@ -1245,60 +1312,4 @@ function exportExcel(){
   WM.forEach(w=>wr.push([w.name,w.type,w.channel,w.contact,w.rate,w.note]));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(wr),'왕홍소개자');
   const hr=[['No.','병원명','진료과목','담당자','연락처','계약상태','수수료','부가세','지급일']];
-  HD.forEach(h=>hr.push([h.no,h.name,h.dept,h.manager,h.tel,h.contract,h.commission,h.vat,h.paydate]));
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(hr),'병원마스터');
-  XLSX.writeFile(wb,'팔로우코리아_'+new Date().toISOString().slice(0,10)+'.xlsx');
-}
-
-// ── 공통 ──
-function closeModal(id){document.getElementById(id).classList.remove('open');}
-function showSub(page,sub,el){
-  document.querySelectorAll(`#page-${page} .subtab`).forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  if(page==='analysis')renderAnalysis(sub);
-  if(page==='daily')renderDaily(sub);
-}
-function refreshAll(){
-  renderAnalysis(curAnaSub);renderDaily(curDailySub);renderHR();renderForeign();renderDashboard();renderWm();
-}
-function showPage(id,tab){
-  document.querySelectorAll('.page-section').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  const pg=document.getElementById('page-'+id);if(pg)pg.classList.add('active');
-  if(tab)tab.classList.add('active');
-  if(id==='calendar')renderCalendar();
-  if(id==='hospitals'){renderCatFilters();filterHospitals();}
-  if(id==='analysis')renderAnalysis(curAnaSub);
-  if(id==='daily')renderDaily(curDailySub);
-  if(id==='hospital_rev')renderHR();
-  if(id==='foreign')renderForeign();
-  if(id==='dashboard')renderDashboard();
-  if(id==='wanghong_mgmt')renderWm();
-}
-
-init();
-</script>
-<!-- 병원 수정 모달 -->
-<div class="modal-overlay" id="hd-modal" onclick="if(event.target===this)closeModal('hd-modal')">
-<div class="modal" style="width:520px;">
-  <h2 id="hd-modal-title">병원 정보 수정</h2>
-  <div class="fg">
-    <div class="fitem full"><label>병원명</label><input type="text" id="hd-name" readonly style="background:#f5f5f5;color:#888;"></div>
-    <div class="fitem"><label>진료과목</label><input type="text" id="hd-dept" placeholder="성형외과"></div>
-    <div class="fitem"><label>계약 상태</label>
-      <select id="hd-contract">
-        <option value="계약완료">계약완료</option>
-        <option value="협의중">협의중</option>
-        <option value="미정">미정</option>
-      </select>
-    </div>
-    <div class="fitem"><label>담당자</label><input type="text" id="hd-manager" placeholder="홍길동 팀장"></div>
-    <div class="fitem"><label>연락처</label><input type="text" id="hd-tel" placeholder="010-0000-0000"></div>
-    <div class="fitem"><label>수수료 조건</label><input type="text" id="hd-commission" placeholder="20% 또는 피부20%/성형30%"></div>
-    <div class="fitem"><label>부가세</label>
-      <select id="hd-vat">
-        <option value="별도">별도</option>
-        <option value="포함">포함</option>
-      </select>
-    </div>
-    <div class="fitem"><label>수수료 지급일</label><input t
+  HD.forEach(h=>hr.push([h.no,h.name,h.dept,h.manager,h.tel,h
