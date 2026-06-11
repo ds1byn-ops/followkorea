@@ -480,37 +480,37 @@ const CATS={
 };
 
 // ── 병원 마스터 30개 ──
-const HD=[
-  {no:1,name:'GV성형외과',dept:'성형외과',manager:'홍성민 이사',tel:'010-2000-7373',contract:'미정',commission:'피부20%/성형30%',vat:'별도',paydate:''},
-  {no:2,name:'JD피부성형센터(장덕한방)',dept:'피부과/한방',manager:'이은진 팀장',tel:'010-9627-6150',contract:'계약완료',commission:'30%',vat:'별도',paydate:''},
-  {no:3,name:'강남다움의원',dept:'의원',manager:'신부규 이사',tel:'010-8349-3311',contract:'협의중',commission:'30%',vat:'별도',paydate:''},
-  {no:4,name:'강남서울안과',dept:'안과',manager:'심필보 대표',tel:'010-3413-9958',contract:'미정',commission:'검사비제외30%',vat:'별도',paydate:''},
-  {no:5,name:'강남스마트',dept:'신경과(수액)',manager:'-',tel:'-',contract:'미정',commission:'20~30%',vat:'포함',paydate:'말일'},
-  {no:6,name:'고운몸의원',dept:'성형외과(바디)',manager:'박규보 대표',tel:'010-7759-8535',contract:'미정',commission:'협의중',vat:'별도',paydate:''},
-  {no:7,name:'글로비성형외과',dept:'성형외과',manager:'채진명 팀장',tel:'010-5014-6997',contract:'협의중',commission:'피부20%/성형30%',vat:'별도',paydate:'익월10일'},
-  {no:8,name:'더뷰티성형외과',dept:'성형외과',manager:'-',tel:'-',contract:'협의중',commission:'20%',vat:'별도',paydate:''},
-  {no:9,name:'드림성형외과',dept:'성형외과',manager:'맹흔 중국담당',tel:'010-5153-1617',contract:'계약완료',commission:'20%',vat:'별도',paydate:''},
-  {no:10,name:'라미체의원',dept:'내과/피부과',manager:'정홍양 파트장',tel:'010-7785-2389',contract:'계약완료',commission:'20%(VAT포함)',vat:'포함',paydate:'청구7~14일전'},
-  {no:11,name:'루비성형외과(신사점)',dept:'성형외과',manager:'박경이 차장',tel:'010-9809-8081',contract:'협의중',commission:'30%',vat:'포함',paydate:'매월15일'},
-  {no:12,name:'리프톤의원',dept:'피부과',manager:'-',tel:'-',contract:'미정',commission:'협의중',vat:'별도',paydate:''},
-  {no:13,name:'바른길산부인과',dept:'산부인과',manager:'윤문경',tel:'010-2191-0998',contract:'계약완료',commission:'줄기세포포함30%/미포함20%',vat:'별도',paydate:''},
-  {no:14,name:'벤자민의원',dept:'피부과',manager:'박혜린 중국담당',tel:'010-',contract:'미정',commission:'12%(통역X)/15%(통역)',vat:'별도',paydate:''},
-  {no:15,name:'뷰성형외과',dept:'성형외과',manager:'김엽 중국주임',tel:'010-3808-7174',contract:'협의중',commission:'30%(VAT포함)',vat:'포함',paydate:''},
-  {no:16,name:'셀로라의원',dept:'의원(줄기세포)',manager:'-',tel:'-',contract:'미정',commission:'20%',vat:'별도',paydate:''},
-  {no:17,name:'셀리닉의원',dept:'의원(VIP줄기세포)',manager:'송은서 총괄이사',tel:'010-3850-6085',contract:'미정',commission:'협의중',vat:'별도',paydate:''},
-  {no:18,name:'신상성형외과',dept:'성형외과',manager:'박정민 팀장',tel:'010-2439-0568',contract:'계약완료',commission:'30%(1억↑40%)',vat:'포함',paydate:'익월15일·말일 2회'},
-  {no:19,name:'신소애여성의원',dept:'산부인과',manager:'-',tel:'-',contract:'협의중',commission:'협의중',vat:'별도',paydate:''},
-  {no:20,name:'오크우드봄의원',dept:'의원',manager:'박아현 상담이사',tel:'010-4114-2043',contract:'협의중',commission:'피부20%/기타30%',vat:'별도',paydate:''},
-  {no:21,name:'원셀의원',dept:'의원(줄기세포)',manager:'김선희 이사',tel:'010-5045-8484',contract:'협의중',commission:'피부15%/성형30%',vat:'별도',paydate:''},
-  {no:22,name:'원진성형외과피부과',dept:'성형외과/피부과',manager:'-',tel:'-',contract:'미정',commission:'협의중',vat:'별도',paydate:''},
-  {no:23,name:'이에스청담성형외과',dept:'성형외과/피부과',manager:'-',tel:'-',contract:'미정',commission:'주사20%/수술30%',vat:'별도',paydate:'매월15일'},
-  {no:24,name:'지유의원(사적인아름다움)',dept:'의원',manager:'-',tel:'-',contract:'미정',commission:'10%',vat:'포함',paydate:'첫주 금요일'},
-  {no:25,name:'차움',dept:'종합검진',manager:'양민혜 파트장',tel:'010-8607-6696',contract:'협의중',commission:'20%',vat:'별도',paydate:''},
-  {no:26,name:'청담서클의원',dept:'의원',manager:'-',tel:'-',contract:'미정',commission:'협의중',vat:'별도',paydate:'2~3일후'},
-  {no:27,name:'트리니티라파엘로청담의원',dept:'의원',manager:'심필보 대표',tel:'010-3413-9958',contract:'미정',commission:'협의중',vat:'별도',paydate:''},
-  {no:28,name:'페이스라인성형외과',dept:'성형외과',manager:'박준 대표',tel:'010-9116-3320',contract:'미정',commission:'20%',vat:'별도',paydate:''},
-  {no:29,name:'히어산부인과',dept:'산부인과',manager:'이희영 경영이사',tel:'010-4815-9150',contract:'협의중',commission:'20%',vat:'별도',paydate:''},
-  {no:30,name:'히어피부과',dept:'피부과',manager:'이희영 경영이사',tel:'010-4815-9150',contract:'협의중',commission:'15%',vat:'별도',paydate:''},
+let HD=[
+  {no:1,name:'GV성형외과',dept:'성형외과',manager:'홍성민 이사',tel:'010-2000-7373',contract:'미정',commission:'피부20%/성형30%',vat:'별도',paydate:'',note:''},
+  {no:2,name:'JD피부성형센터(장덕한방)',dept:'피부과/한방',manager:'이은진 팀장',tel:'010-9627-6150',contract:'계약완료',commission:'30%',vat:'별도',paydate:'',note:''},
+  {no:3,name:'강남다움의원',dept:'의원',manager:'신부규 이사',tel:'010-8349-3311',contract:'협의중',commission:'30%',vat:'별도',paydate:'',note:''},
+  {no:4,name:'강남서울안과',dept:'안과',manager:'심필보 대표',tel:'010-3413-9958',contract:'미정',commission:'검사비제외30%',vat:'별도',paydate:'',note:''},
+  {no:5,name:'강남스마트',dept:'신경과(수액)',manager:'-',tel:'-',contract:'미정',commission:'20~30%',vat:'포함',paydate:'말일',note:''},
+  {no:6,name:'고운몸의원',dept:'성형외과(바디)',manager:'박규보 대표',tel:'010-7759-8535',contract:'미정',commission:'협의중',vat:'별도',paydate:'',note:''},
+  {no:7,name:'글로비성형외과',dept:'성형외과',manager:'채진명 팀장',tel:'010-5014-6997',contract:'협의중',commission:'피부20%/성형30%',vat:'별도',paydate:'익월10일',note:''},
+  {no:8,name:'더뷰티성형외과',dept:'성형외과',manager:'-',tel:'-',contract:'협의중',commission:'20%',vat:'별도',paydate:'',note:''},
+  {no:9,name:'드림성형외과',dept:'성형외과',manager:'맹흔 중국담당',tel:'010-5153-1617',contract:'계약완료',commission:'20%',vat:'별도',paydate:'',note:''},
+  {no:10,name:'라미체의원',dept:'내과/피부과',manager:'정홍양 파트장',tel:'010-7785-2389',contract:'계약완료',commission:'20%(VAT포함)',vat:'포함',paydate:'청구7~14일전',note:''},
+  {no:11,name:'루비성형외과(신사점)',dept:'성형외과',manager:'박경이 차장',tel:'010-9809-8081',contract:'협의중',commission:'30%',vat:'포함',paydate:'매월15일',note:''},
+  {no:12,name:'리프톤의원',dept:'피부과',manager:'-',tel:'-',contract:'미정',commission:'협의중',vat:'별도',paydate:'',note:''},
+  {no:13,name:'바른길산부인과',dept:'산부인과',manager:'윤문경',tel:'010-2191-0998',contract:'계약완료',commission:'줄기세포포함30%/미포함20%',vat:'별도',paydate:'',note:''},
+  {no:14,name:'벤자민의원',dept:'피부과',manager:'박혜린 중국담당',tel:'010-',contract:'미정',commission:'12%(통역X)/15%(통역)',vat:'별도',paydate:'',note:''},
+  {no:15,name:'뷰성형외과',dept:'성형외과',manager:'김엽 중국주임',tel:'010-3808-7174',contract:'협의중',commission:'30%(VAT포함)',vat:'포함',paydate:'',note:''},
+  {no:16,name:'셀로라의원',dept:'의원(줄기세포)',manager:'-',tel:'-',contract:'미정',commission:'20%',vat:'별도',paydate:'',note:''},
+  {no:17,name:'셀리닉의원',dept:'의원(VIP줄기세포)',manager:'송은서 총괄이사',tel:'010-3850-6085',contract:'미정',commission:'협의중',vat:'별도',paydate:'',note:''},
+  {no:18,name:'신상성형외과',dept:'성형외과',manager:'박정민 팀장',tel:'010-2439-0568',contract:'계약완료',commission:'30%(1억↑40%)',vat:'포함',paydate:'익월15일·말일 2회',note:''},
+  {no:19,name:'신소애여성의원',dept:'산부인과',manager:'-',tel:'-',contract:'협의중',commission:'협의중',vat:'별도',paydate:'',note:''},
+  {no:20,name:'오크우드봄의원',dept:'의원',manager:'박아현 상담이사',tel:'010-4114-2043',contract:'협의중',commission:'피부20%/기타30%',vat:'별도',paydate:'',note:''},
+  {no:21,name:'원셀의원',dept:'의원(줄기세포)',manager:'김선희 이사',tel:'010-5045-8484',contract:'협의중',commission:'피부15%/성형30%',vat:'별도',paydate:'',note:''},
+  {no:22,name:'원진성형외과피부과',dept:'성형외과/피부과',manager:'-',tel:'-',contract:'미정',commission:'협의중',vat:'별도',paydate:'',note:''},
+  {no:23,name:'이에스청담성형외과',dept:'성형외과/피부과',manager:'-',tel:'-',contract:'미정',commission:'주사20%/수술30%',vat:'별도',paydate:'매월15일',note:''},
+  {no:24,name:'지유의원(사적인아름다움)',dept:'의원',manager:'-',tel:'-',contract:'미정',commission:'10%',vat:'포함',paydate:'첫주 금요일',note:''},
+  {no:25,name:'차움',dept:'종합검진',manager:'양민혜 파트장',tel:'010-8607-6696',contract:'협의중',commission:'20%',vat:'별도',paydate:'',note:''},
+  {no:26,name:'청담서클의원',dept:'의원',manager:'-',tel:'-',contract:'미정',commission:'협의중',vat:'별도',paydate:'2~3일후',note:''},
+  {no:27,name:'트리니티라파엘로청담의원',dept:'의원',manager:'심필보 대표',tel:'010-3413-9958',contract:'미정',commission:'협의중',vat:'별도',paydate:'',note:''},
+  {no:28,name:'페이스라인성형외과',dept:'성형외과',manager:'박준 대표',tel:'010-9116-3320',contract:'미정',commission:'20%',vat:'별도',paydate:'',note:''},
+  {no:29,name:'히어산부인과',dept:'산부인과',manager:'이희영 경영이사',tel:'010-4815-9150',contract:'협의중',commission:'20%',vat:'별도',paydate:'',note:''},
+  {no:30,name:'히어피부과',dept:'피부과',manager:'이희영 경영이사',tel:'010-4815-9150',contract:'협의중',commission:'15%',vat:'별도',paydate:'',note:''},
 ];
 
 // ── 왕홍/소개자 마스터 ──
@@ -1008,16 +1008,56 @@ function filterHospitals(){
     const div=document.createElement('div');div.className='hcard';
     div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
       <div><div class="hn">${h.name}</div><div class="hd">${h.dept}</div></div>
-      <span class="badge ${cc}">${h.contract}</span></div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <span class="badge ${cc}" style="cursor:pointer;" onclick="openHospitalModal(${h.no})">${h.contract}</span>
+        <button class="btn sm" onclick="openHospitalModal(${h.no})" style="padding:2px 7px;font-size:10px;">수정</button>
+      </div></div>
       <div class="hcats">${cats.map(c=>`<span class="cat-tag">${c}</span>`).join('')}</div>
       <div class="hinfo">
-        <span><span class="lbl">담당자</span>${h.manager}</span>
-        <span><span class="lbl">연락처</span>${h.tel}</span>
-        <span><span class="lbl">수수료</span><b style="color:#B8960C;">${h.commission}</b></span>
+        <span><span class="lbl">담당자</span><span style="cursor:pointer;color:#555;" onclick="openHospitalModal(${h.no})">${h.manager}</span></span>
+        <span><span class="lbl">연락처</span><span style="cursor:pointer;color:#555;" onclick="openHospitalModal(${h.no})">${h.tel}</span></span>
+        <span><span class="lbl">수수료</span><b style="color:#B8960C;cursor:pointer;" onclick="openHospitalModal(${h.no})">${h.commission}</b></span>
         ${h.paydate?`<span><span class="lbl">지급일</span>${h.paydate}</span>`:''}
+        ${h.note?`<span><span class="lbl">메모</span><span style="color:#888;">${h.note}</span></span>`:''}
       </div>`;
     grid.appendChild(div);
   });
+}
+
+
+// ── 병원 정보 수정 ──
+function openHospitalModal(no){
+  const h=HD.find(x=>x.no===no);if(!h)return;
+  document.getElementById('hd-modal-title').textContent='병원 정보 수정 — '+h.name;
+  document.getElementById('hd-name').value=h.name;
+  document.getElementById('hd-dept').value=h.dept||'';
+  document.getElementById('hd-contract').value=h.contract||'미정';
+  document.getElementById('hd-manager').value=h.manager||'';
+  document.getElementById('hd-tel').value=h.tel||'';
+  document.getElementById('hd-commission').value=h.commission||'';
+  document.getElementById('hd-vat').value=h.vat||'별도';
+  document.getElementById('hd-paydate').value=h.paydate||'';
+  document.getElementById('hd-note').value=h.note||'';
+  document.getElementById('hd-modal').classList.add('open');
+  document.getElementById('hd-modal')._editNo=no;
+}
+
+function saveHospital(){
+  const no=document.getElementById('hd-modal')._editNo;
+  const idx=HD.findIndex(h=>h.no===no);if(idx<0)return;
+  HD[idx]={
+    ...HD[idx],
+    dept:document.getElementById('hd-dept').value.trim(),
+    contract:document.getElementById('hd-contract').value,
+    manager:document.getElementById('hd-manager').value.trim(),
+    tel:document.getElementById('hd-tel').value.trim(),
+    commission:document.getElementById('hd-commission').value.trim(),
+    vat:document.getElementById('hd-vat').value,
+    paydate:document.getElementById('hd-paydate').value.trim(),
+    note:document.getElementById('hd-note').value.trim(),
+  };
+  closeModal('hd-modal');
+  filterHospitals();
 }
 
 // ── 병원별 매출/입금 ──
@@ -1224,5 +1264,38 @@ function showPage(id,tab){
 
 init();
 </script>
+<!-- 병원 수정 모달 -->
+<div class="modal-overlay" id="hd-modal" onclick="if(event.target===this)closeModal('hd-modal')">
+<div class="modal" style="width:520px;">
+  <h2 id="hd-modal-title">병원 정보 수정</h2>
+  <div class="fg">
+    <div class="fitem full"><label>병원명</label><input type="text" id="hd-name" readonly style="background:#f5f5f5;color:#888;"></div>
+    <div class="fitem"><label>진료과목</label><input type="text" id="hd-dept" placeholder="성형외과"></div>
+    <div class="fitem"><label>계약 상태</label>
+      <select id="hd-contract">
+        <option value="계약완료">계약완료</option>
+        <option value="협의중">협의중</option>
+        <option value="미정">미정</option>
+      </select>
+    </div>
+    <div class="fitem"><label>담당자</label><input type="text" id="hd-manager" placeholder="홍길동 팀장"></div>
+    <div class="fitem"><label>연락처</label><input type="text" id="hd-tel" placeholder="010-0000-0000"></div>
+    <div class="fitem"><label>수수료 조건</label><input type="text" id="hd-commission" placeholder="20% 또는 피부20%/성형30%"></div>
+    <div class="fitem"><label>부가세</label>
+      <select id="hd-vat">
+        <option value="별도">별도</option>
+        <option value="포함">포함</option>
+      </select>
+    </div>
+    <div class="fitem"><label>수수료 지급일</label><input type="text" id="hd-paydate" placeholder="익월15일"></div>
+    <div class="fitem full"><label>메모</label><input type="text" id="hd-note" placeholder="기타 계약 조건 등"></div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn" onclick="closeModal('hd-modal')">취소</button>
+    <button class="btn primary" onclick="saveHospital()">저장</button>
+  </div>
+</div>
+</div>
+
 </body>
 </html>
