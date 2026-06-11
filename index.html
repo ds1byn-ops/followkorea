@@ -274,6 +274,9 @@ async function dbSaveOne(table, row){
       <option value="">전체 계약상태</option>
       <option value="계약완료">계약완료</option><option value="협의중">협의중</option><option value="미정">미정</option>
     </select>
+    <input type="text" id="h-search" placeholder="병원명 검색..." oninput="filterHospitals()" style="width:160px;">
+    <button class="btn primary" onclick="openHospitalModal(null)">+ 병원 추가</button>
+    <span style="margin-left:4px;font-size:12px;color:#888;" id="h-count"></span>
   </div>
   <div class="cat-filter-row" id="cat-filter-row"></div>
   <div id="hospital-grid" class="hospital-grid"></div>
@@ -1087,25 +1090,38 @@ function renderCatFilters(){
 function setCat(cat,el){activeCat=cat;document.querySelectorAll('.cat-chip').forEach(b=>b.classList.remove('active'));el.classList.add('active');filterHospitals();}
 function filterHospitals(){
   const contract=document.getElementById('h-contract').value;
-  let data=HD.filter(h=>!contract||h.contract===contract);
+  const q=(document.getElementById('h-search')||{value:''}).value.toLowerCase();
+  let data=HD.filter(h=>{
+    const mc=!contract||h.contract===contract;
+    const mq=!q||h.name.toLowerCase().includes(q)||(h.dept||'').toLowerCase().includes(q)||(h.manager||'').toLowerCase().includes(q);
+    return mc&&mq;
+  });
   if(activeCat){const ch=CATS[activeCat]||[];data=data.filter(h=>ch.some(c=>h.name.includes(c.substring(0,4))||c.includes(h.name.substring(0,4))));}
+  const countEl=document.getElementById('h-count');
+  if(countEl)countEl.textContent=`총 ${data.length}개 병원`;
   const grid=document.getElementById('hospital-grid');grid.innerHTML='';
   data.forEach(h=>{
     const cc={계약완료:'contract',협의중:'negotiating',미정:'undecided'}[h.contract]||'undecided';
     const cats=Object.entries(CATS).filter(([c,hs])=>hs.some(hn=>h.name.includes(hn.substring(0,4))||hn.includes(h.name.substring(0,4)))).map(([c])=>c);
+    // 이 병원 예약 건수
+    const bkCnt=BK.filter(b=>b.hospital===h.name).length;
     const div=document.createElement('div');div.className='hcard';
     div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
-      <div><div class="hn">${h.name}</div><div class="hd">${h.dept}</div></div>
-      <div style="display:flex;gap:6px;align-items:center;">
+      <div>
+        <div class="hn">${h.name}</div>
+        <div class="hd">${h.dept||''}${bkCnt>0?` <span style="color:#D4AF37;font-size:10px;">예약 ${bkCnt}건</span>`:''}</div>
+      </div>
+      <div style="display:flex;gap:5px;align-items:center;">
         <span class="badge ${cc}" style="cursor:pointer;" onclick="openHospitalModal(${h.no})">${h.contract}</span>
         <button class="btn sm" onclick="openHospitalModal(${h.no})" style="padding:2px 7px;font-size:10px;">수정</button>
       </div></div>
       <div class="hcats">${cats.map(c=>`<span class="cat-tag">${c}</span>`).join('')}</div>
       <div class="hinfo">
-        <span><span class="lbl">담당자</span><span style="cursor:pointer;color:#555;" onclick="openHospitalModal(${h.no})">${h.manager}</span></span>
-        <span><span class="lbl">연락처</span><span style="cursor:pointer;color:#555;" onclick="openHospitalModal(${h.no})">${h.tel}</span></span>
-        <span><span class="lbl">수수료</span><b style="color:#B8960C;cursor:pointer;" onclick="openHospitalModal(${h.no})">${h.commission}</b></span>
+        <span><span class="lbl">담당자</span>${h.manager||'-'}</span>
+        <span><span class="lbl">연락처</span>${h.tel||'-'}</span>
+        <span><span class="lbl">수수료</span><b style="color:#B8960C;">${h.commission||'-'}</b></span>
         ${h.paydate?`<span><span class="lbl">지급일</span>${h.paydate}</span>`:''}
+        ${h.link?`<span><span class="lbl">홈페이지</span><a href="${h.link}" target="_blank" style="color:#2563eb;font-size:10px;">링크</a></span>`:''}
         ${h.note?`<span><span class="lbl">메모</span><span style="color:#888;">${h.note}</span></span>`:''}
       </div>`;
     grid.appendChild(div);
@@ -1115,38 +1131,70 @@ function filterHospitals(){
 
 // ── 병원 정보 수정 ──
 function openHospitalModal(no){
-  const h=HD.find(x=>x.no===no);if(!h)return;
-  document.getElementById('hd-modal-title').textContent='병원 정보 수정 — '+h.name;
-  document.getElementById('hd-name').value=h.name;
-  document.getElementById('hd-dept').value=h.dept||'';
-  document.getElementById('hd-contract').value=h.contract||'미정';
-  document.getElementById('hd-manager').value=h.manager||'';
-  document.getElementById('hd-tel').value=h.tel||'';
-  document.getElementById('hd-commission').value=h.commission||'';
-  document.getElementById('hd-vat').value=h.vat||'별도';
-  document.getElementById('hd-paydate').value=h.paydate||'';
-  document.getElementById('hd-note').value=h.note||'';
+  const isNew = no===null;
+  const h = isNew ? null : HD.find(x=>x.no===no);
+  document.getElementById('hd-modal-title').textContent = isNew ? '병원 추가' : '병원 정보 수정 — '+h.name;
+  document.getElementById('hd-del-btn').style.display = isNew ? 'none' : '';
+  // 필드 채우기
+  document.getElementById('hd-name').value = isNew ? '' : (h.name||'');
+  document.getElementById('hd-name').readOnly = false;
+  document.getElementById('hd-name').style.background = '';
+  document.getElementById('hd-name').style.color = '';
+  document.getElementById('hd-dept').value = isNew ? '' : (h.dept||'');
+  document.getElementById('hd-contract').value = isNew ? '미정' : (h.contract||'미정');
+  document.getElementById('hd-manager').value = isNew ? '' : (h.manager||'');
+  document.getElementById('hd-tel').value = isNew ? '' : (h.tel||'');
+  document.getElementById('hd-link').value = isNew ? '' : (h.link||'');
+  document.getElementById('hd-commission').value = isNew ? '' : (h.commission||'');
+  document.getElementById('hd-vat').value = isNew ? '별도' : (h.vat||'별도');
+  document.getElementById('hd-paydate').value = isNew ? '' : (h.paydate||'');
+  document.getElementById('hd-note').value = isNew ? '' : (h.note||'');
   document.getElementById('hd-modal').classList.add('open');
-  document.getElementById('hd-modal')._editNo=no;
+  document.getElementById('hd-modal')._editNo = isNew ? null : no;
 }
 
 function saveHospital(){
   const no=document.getElementById('hd-modal')._editNo;
-  const idx=HD.findIndex(h=>h.no===no);if(idx<0)return;
-  HD[idx]={
-    ...HD[idx],
+  const name=document.getElementById('hd-name').value.trim();
+  if(!name){alert('병원명을 입력하세요');return;}
+  const data={
+    name,
     dept:document.getElementById('hd-dept').value.trim(),
     contract:document.getElementById('hd-contract').value,
     manager:document.getElementById('hd-manager').value.trim(),
     tel:document.getElementById('hd-tel').value.trim(),
+    link:document.getElementById('hd-link').value.trim(),
     commission:document.getElementById('hd-commission').value.trim(),
     vat:document.getElementById('hd-vat').value,
     paydate:document.getElementById('hd-paydate').value.trim(),
     note:document.getElementById('hd-note').value.trim(),
   };
+  if(no===null){
+    // 신규 추가
+    const newNo=HD.reduce((m,h)=>Math.max(m,h.no),0)+1;
+    HD.push({no:newNo,...data});
+  }else{
+    // 기존 수정
+    const idx=HD.findIndex(h=>h.no===no);
+    if(idx>=0) HD[idx]={...HD[idx],...data};
+  }
   closeModal('hd-modal');
   filterHospitals();
-  // 변경된 병원 정보만 저장
+  populateHospitalFilter();
+  dbSave('hospitals', HD).catch(e=>console.error(e));
+}
+
+function deleteHospital(){
+  const no=document.getElementById('hd-modal')._editNo;
+  if(no===null)return;
+  const h=HD.find(x=>x.no===no);
+  if(!confirm(`"${h?h.name:'이 병원'}"을 삭제하시겠습니까?
+
+연결된 예약 데이터는 유지됩니다.`))return;
+  HD=HD.filter(h=>h.no!==no);
+  closeModal('hd-modal');
+  filterHospitals();
+  populateHospitalFilter();
   dbSave('hospitals', HD).catch(e=>console.error(e));
 }
 
@@ -1363,7 +1411,7 @@ init();
 <div class="modal" style="width:520px;">
   <h2 id="hd-modal-title">병원 정보 수정</h2>
   <div class="fg">
-    <div class="fitem full"><label>병원명</label><input type="text" id="hd-name" readonly style="background:#f5f5f5;color:#888;"></div>
+    <div class="fitem full"><label>병원명 *</label><input type="text" id="hd-name" placeholder="병원명 입력"></div>
     <div class="fitem"><label>진료과목</label><input type="text" id="hd-dept" placeholder="성형외과"></div>
     <div class="fitem"><label>계약 상태</label>
       <select id="hd-contract">
@@ -1374,6 +1422,7 @@ init();
     </div>
     <div class="fitem"><label>담당자</label><input type="text" id="hd-manager" placeholder="홍길동 팀장"></div>
     <div class="fitem"><label>연락처</label><input type="text" id="hd-tel" placeholder="010-0000-0000"></div>
+    <div class="fitem"><label>홈페이지</label><input type="text" id="hd-link" placeholder="https://..."></div>
     <div class="fitem"><label>수수료 조건</label><input type="text" id="hd-commission" placeholder="20% 또는 피부20%/성형30%"></div>
     <div class="fitem"><label>부가세</label>
       <select id="hd-vat">
@@ -1385,6 +1434,7 @@ init();
     <div class="fitem full"><label>메모</label><input type="text" id="hd-note" placeholder="기타 계약 조건 등"></div>
   </div>
   <div class="modal-actions">
+    <button class="btn danger sm" id="hd-del-btn" onclick="deleteHospital()" style="display:none;margin-right:auto;">🗑 삭제</button>
     <button class="btn" onclick="closeModal('hd-modal')">취소</button>
     <button class="btn primary" onclick="saveHospital()">저장</button>
   </div>
