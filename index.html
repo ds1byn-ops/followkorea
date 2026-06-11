@@ -652,16 +652,29 @@ async function initApp(){
       dbLoad('wanghongs'),
       dbLoad('hospitals')
     ]);
-    if(bkData && bkData.length>0) BK=bkData;
-    if(wmData && wmData.length>0) WM=wmData;
+    // 데이터 있으면 로드, 없으면 기본 데이터를 DB에 초기 저장
+    if(bkData && bkData.length>0){
+      BK=bkData;
+    } else {
+      console.log('bookings 초기 데이터 저장 중...');
+      await dbSave('bookings', BK);
+    }
+    if(wmData && wmData.length>0){
+      WM=wmData;
+    } else {
+      console.log('wanghongs 초기 데이터 저장 중...');
+      await dbSave('wanghongs', WM);
+    }
     if(hdData && hdData.length>0){
-      // HD는 no 기준으로 기존 데이터에 병합 (계약상태 등 업데이트)
       hdData.forEach(saved=>{
         const idx=HD.findIndex(h=>h.no===saved.no);
         if(idx>=0) HD[idx]={...HD[idx],...saved};
       });
+    } else {
+      console.log('hospitals 초기 데이터 저장 중...');
+      await dbSave('hospitals', HD);
     }
-  }catch(e){ console.warn('DB 로드 실패, 기본 데이터 사용', e); }
+  }catch(e){ console.warn('DB 오류, 기본 데이터 사용:', e); }
   showLoading(false);
   // 신상성형외과 맨 위, 나머지 가나다순
   const sorted=[...HD].sort((a,b)=>{
