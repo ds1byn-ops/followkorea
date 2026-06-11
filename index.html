@@ -605,7 +605,21 @@ function init(){
 
 // localStorage 미사용 - 엑셀 다운로드로 백업
 
+
+// ── WM 로컬 저장 ──
+function saveWmData(){
+  try{localStorage.setItem('fk_wm_v4',JSON.stringify(WM));}
+  catch(e){}
+}
+function loadWmData(){
+  try{
+    const saved=localStorage.getItem('fk_wm_v4');
+    if(saved){const p=JSON.parse(saved);if(Array.isArray(p)&&p.length>0)WM=p;}
+  }catch(e){}
+}
+
 function initApp(){
+  loadWmData();
   // 신상성형외과 맨 위, 나머지 가나다순
   const sorted=[...HD].sort((a,b)=>{
     if(a.name===STAR_HOSP)return -1;
@@ -1170,15 +1184,15 @@ function openWmModal(id){
   document.getElementById('wm-modal').classList.add('open');
 }
 function saveWm(){
-  const obj={name:document.getElementById('wm-name').value.trim(),type:document.getElementById('wm-type').value,channel:document.getElementById('wm-channel').value.trim(),contact:document.getElementById('wm-contact').value.trim(),rate:parseInt(document.getElementById('wm-rate').value)||0,note:document.getElementById('wm-note').value.trim()};
+  const obj={name:document.getElementById('wm-name').value.trim(),type:document.getElementById('wm-type').value,channel:document.getElementById('wm-channel').value.trim(),contact:document.getElementById('wm-contact').value.trim(),rate:document.getElementById('wm-rate').value===''?0:parseInt(document.getElementById('wm-rate').value),note:document.getElementById('wm-note').value.trim()};
   if(!obj.name){alert('이름을 입력하세요');return;}
   if(wmEditId){const i=WM.findIndex(w=>w.id===wmEditId);WM[i]={...WM[i],...obj};}
   else{obj.id=WM.reduce((m,w)=>Math.max(m,w.id),0)+1;WM.push(obj);}
-  closeModal('wm-modal');renderWm();updateInflowSel();
+  closeModal('wm-modal');saveWmData();renderWm();updateInflowSel();
 }
 function deleteWm(){
   if(!wmEditId||!confirm('삭제하시겠습니까?'))return;
-  WM=WM.filter(w=>w.id!==wmEditId);closeModal('wm-modal');renderWm();updateInflowSel();
+  WM=WM.filter(w=>w.id!==wmEditId);closeModal('wm-modal');saveWmData();renderWm();updateInflowSel();
 }
 
 // ── 대시보드 ──
@@ -1287,15 +1301,4 @@ init();
         <option value="포함">포함</option>
       </select>
     </div>
-    <div class="fitem"><label>수수료 지급일</label><input type="text" id="hd-paydate" placeholder="익월15일"></div>
-    <div class="fitem full"><label>메모</label><input type="text" id="hd-note" placeholder="기타 계약 조건 등"></div>
-  </div>
-  <div class="modal-actions">
-    <button class="btn" onclick="closeModal('hd-modal')">취소</button>
-    <button class="btn primary" onclick="saveHospital()">저장</button>
-  </div>
-</div>
-</div>
-
-</body>
-</html>
+    <div class="fitem"><label>수수료 지급일</label><input t
