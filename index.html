@@ -1312,4 +1312,71 @@ function exportExcel(){
   WM.forEach(w=>wr.push([w.name,w.type,w.channel,w.contact,w.rate,w.note]));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(wr),'왕홍소개자');
   const hr=[['No.','병원명','진료과목','담당자','연락처','계약상태','수수료','부가세','지급일']];
-  HD.forEach(h=>hr.push([h.no,h.name,h.dept,h.manager,h.tel,h
+  HD.forEach(h=>hr.push([h.no,h.name,h.dept,h.manager,h.tel,h.contract,h.commission,h.vat,h.paydate]));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(hr),'병원마스터');
+  XLSX.writeFile(wb,'팔로우코리아_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+
+// ── 공통 ──
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function showSub(page,sub,el){
+  document.querySelectorAll(`#page-${page} .subtab`).forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  if(page==='analysis')renderAnalysis(sub);
+  if(page==='daily')renderDaily(sub);
+}
+function refreshAll(){
+  renderAnalysis(curAnaSub);renderDaily(curDailySub);renderHR();renderForeign();renderDashboard();renderWm();
+}
+function showPage(id,tab){
+  document.querySelectorAll('.page-section').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  const pg=document.getElementById('page-'+id);if(pg)pg.classList.add('active');
+  if(tab)tab.classList.add('active');
+  if(id==='calendar')renderCalendar();
+  if(id==='hospitals'){renderCatFilters();filterHospitals();}
+  if(id==='analysis')renderAnalysis(curAnaSub);
+  if(id==='daily')renderDaily(curDailySub);
+  if(id==='hospital_rev')renderHR();
+  if(id==='foreign')renderForeign();
+  if(id==='dashboard')renderDashboard();
+  if(id==='wanghong_mgmt')renderWm();
+}
+
+init();
+</script>
+<!-- 병원 수정 모달 -->
+<div class="modal-overlay" id="hd-modal" onclick="if(event.target===this)closeModal('hd-modal')">
+<div class="modal" style="width:520px;">
+  <h2 id="hd-modal-title">병원 정보 수정</h2>
+  <div class="fg">
+    <div class="fitem full"><label>병원명</label><input type="text" id="hd-name" readonly style="background:#f5f5f5;color:#888;"></div>
+    <div class="fitem"><label>진료과목</label><input type="text" id="hd-dept" placeholder="성형외과"></div>
+    <div class="fitem"><label>계약 상태</label>
+      <select id="hd-contract">
+        <option value="계약완료">계약완료</option>
+        <option value="협의중">협의중</option>
+        <option value="미정">미정</option>
+      </select>
+    </div>
+    <div class="fitem"><label>담당자</label><input type="text" id="hd-manager" placeholder="홍길동 팀장"></div>
+    <div class="fitem"><label>연락처</label><input type="text" id="hd-tel" placeholder="010-0000-0000"></div>
+    <div class="fitem"><label>수수료 조건</label><input type="text" id="hd-commission" placeholder="20% 또는 피부20%/성형30%"></div>
+    <div class="fitem"><label>부가세</label>
+      <select id="hd-vat">
+        <option value="별도">별도</option>
+        <option value="포함">포함</option>
+      </select>
+    </div>
+    <div class="fitem"><label>수수료 지급일</label><input type="text" id="hd-paydate" placeholder="익월15일"></div>
+    <div class="fitem full"><label>메모</label><input type="text" id="hd-note" placeholder="기타 계약 조건 등"></div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn" onclick="closeModal('hd-modal')">취소</button>
+    <button class="btn primary" onclick="saveHospital()">저장</button>
+  </div>
+</div>
+</div>
+
+</body>
+</html>
