@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>팔로우코리아 예약관리</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Apple SD Gothic Neo','Malgun Gothic','Segoe UI',sans-serif;background:#f5f5f0;color:#1a1a1a;font-size:13px;}
+.header{background:#1a1a1a;color:#fff;padding:12px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:200;}
+.gold{color:#D4AF37;font-weight:600;}
+.header-right{margin-left:auto;display:flex;gap:8px;}
+.tabs{display:flex;background:#fff;border-bottom:1px solid #e0e0e0;padding:0 20px;overflow-x:auto;position:sticky;top:45px;z-index:100;}
+.tab{padding:10px 15px;cursor:pointer;font-size:12px;border-bottom:2px solid transparent;color:#666;white-space:nowrap;}
+.tab.active{color:#1a1a1a;border-bottom-color:#D4AF37;font-weight:600;}
+.tab:hover{color:#1a1a1a;}
+.content{padding:16px 20px;}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px;}
+.sc{background:#fff;border-radius:8px;padding:12px 14px;border:1px solid #e8e8e8;}
+.sc .sl{font-size:10px;color:#888;margin-bottom:4px;}
+.sc .sv{font-size:17px;font-weight:600;color:#1a1a1a;}
+.sc .ss{font-size:10px;color:#aaa;margin-top:2px;}
+.sc.gold .sv{color:#B8960C;}.sc.blue .sv{color:#2563eb;}.sc.green .sv{color:#16a34a;}.sc.red .sv{color:#dc2626;}.sc.purple .sv{color:#7c3aed;}
+.toolbar{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;align-items:center;}
+.toolbar input,.toolbar select{padding:6px 9px;border:1px solid #ddd;border-radius:5px;font-size:12px;background:#fff;color:#1a1a1a;}
+.toolbar input{width:160px;}
+.btn{padding:6px 12px;border-radius:5px;border:1px solid #ddd;background:#fff;font-size:12px;cursor:pointer;color:#1a1a1a;white-space:nowrap;}
+.btn:hover{background:#f5f5f5;}
+.btn.primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
+.btn.gold-btn{background:#D4AF37;color:#fff;border-color:#D4AF37;}
+.btn.sm{padding:3px 8px;font-size:11px;}
+.btn.danger{color:#dc2626;border-color:#fca5a5;}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:6px;overflow:hidden;border:1px solid #e8e8e8;}
+th{background:#f9f9f7;font-weight:500;font-size:11px;color:#555;padding:8px 9px;text-align:left;border-bottom:1px solid #e8e8e8;white-space:nowrap;cursor:pointer;user-select:none;}
+th:hover{background:#f0f0ec;}
+th .sa{font-size:9px;color:#bbb;margin-left:2px;}
+th.sort-asc .sa::after{content:'▲';color:#D4AF37;}
+th.sort-desc .sa::after{content:'▼';color:#D4AF37;}
+td{padding:8px 9px;border-bottom:1px solid #f0f0f0;font-size:11px;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fafaf8;}
+.badge{display:inline-block;padding:2px 6px;border-radius:20px;font-size:10px;font-weight:500;}
+.badge.confirmed{background:#dcfce7;color:#15803d;}.badge.pending{background:#fef9c3;color:#854d0e;}
+.badge.cancelled{background:#fee2e2;color:#991b1b;}.badge.completed{background:#e0f2fe;color:#0369a1;}
+.badge.noshow{background:#fce7f3;color:#9d174d;}.badge.contract{background:#d1fae5;color:#065f46;}
+.badge.negotiating{background:#fef3c7;color:#92400e;}.badge.undecided{background:#f3f4f6;color:#374151;}
+.badge.wanghong{background:#ede9fe;color:#5b21b6;}.badge.guide{background:#dbeafe;color:#1e40af;}
+.badge.agency{background:#fce7f3;color:#9d174d;}.badge.company{background:#d1fae5;color:#065f46;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);display:none;z-index:500;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto;}
+.modal-overlay.open{display:flex;}
+.modal{background:#fff;border-radius:10px;padding:22px;width:660px;max-width:100%;}
+.modal h2{font-size:15px;font-weight:600;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid #f0f0f0;}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.fg .full{grid-column:1/-1;}
+.fitem{display:flex;flex-direction:column;gap:3px;}
+.fitem label{font-size:11px;color:#666;font-weight:500;}
+.fitem input,.fitem select{padding:7px 9px;border:1px solid #ddd;border-radius:5px;font-size:12px;color:#1a1a1a;background:#fff;}
+.fitem input:focus,.fitem select:focus{outline:none;border-color:#D4AF37;}
+.fsec{grid-column:1/-1;font-size:10px;font-weight:600;color:#aaa;padding:8px 0 0;border-top:1px solid #f5f5f5;margin-top:2px;text-transform:uppercase;letter-spacing:0.5px;}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid #f0f0f0;}
+.page-section{display:none;}
+.page-section.active{display:block;}
+.section-title{font-size:12px;font-weight:600;margin-bottom:10px;color:#333;}
+.card-box{background:#fff;border-radius:8px;border:1px solid #e8e8e8;padding:14px;}
+.hospital-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;}
+.hcard{background:#fff;border-radius:7px;border:1px solid #e8e8e8;padding:12px 14px;}
+.hcard .hn{font-size:12px;font-weight:600;margin-bottom:2px;}
+.hcard .hd{font-size:10px;color:#888;margin-bottom:6px;}
+.hcard .hcats{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px;}
+.cat-tag{font-size:9px;padding:1px 6px;border-radius:8px;border:1px solid #e0e0e0;color:#555;background:#fafafa;}
+.hcard .hinfo{font-size:10px;color:#555;display:flex;flex-direction:column;gap:2px;}
+.hcard .hinfo span{display:flex;gap:5px;}
+.hcard .hinfo .lbl{color:#bbb;min-width:46px;}
+.chart-wrap{display:flex;gap:5px;align-items:flex-end;height:110px;overflow-x:auto;padding-bottom:2px;}
+.bcol{display:flex;flex-direction:column;align-items:center;gap:2px;flex:0 0 auto;min-width:36px;}
+.bar{width:24px;border-radius:3px 3px 0 0;min-height:2px;}
+.blbl{font-size:9px;color:#888;white-space:nowrap;text-align:center;max-width:56px;overflow:hidden;text-overflow:ellipsis;}
+.bval{font-size:9px;font-weight:600;color:#555;}
+.cat-filter-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;}
+.cat-chip{padding:3px 10px;border-radius:15px;font-size:11px;border:1px solid #ddd;background:#fff;cursor:pointer;color:#555;}
+.cat-chip.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
+.subtabs{display:flex;gap:0;margin-bottom:14px;border-bottom:1px solid #e8e8e8;}
+.subtab{padding:7px 14px;font-size:12px;cursor:pointer;color:#888;border-bottom:2px solid transparent;}
+.subtab.active{color:#1a1a1a;border-bottom-color:#D4AF37;font-weight:600;}
+.won-hint{font-size:10px;color:#D4AF37;margin-top:2px;min-height:14px;}
+
+
+/* ── 반응형 ── */
+@media(max-width:768px){
+  .tabs{top:44px;padding:0 6px;}
+  .tab{padding:8px 9px;font-size:11px;}
+  .content{padding:10px 10px;}
+  .stats-row{grid-template-columns:repeat(2,1fr);}
+  .toolbar{gap:4px;}
+  .toolbar input{width:120px;}
+  .header{padding:10px 12px;}
+  .hospital-grid{grid-template-columns:1fr;}
+  th,td{padding:6px 6px;font-size:10px;}
+  .modal{width:96vw!important;padding:16px;}
+  .fg{grid-template-columns:1fr!important;}
+  .fg .full{grid-column:1!important;}
+}
+@media(max-width:480px){
+  .sc .sv{font-size:13px;}
+  .tab{padding:7px 7px;font-size:10px;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="gold">팔로우코리아</span>
+  <span style="color:#555;">|</span>
+  <span style="font-size:12px;">중국환자 예약관리 시스템</span>
+  <div class="header-right">
+    <button class="btn" onclick="showPage('wanghong_mgmt',null)" style="font-size:11px;border-color:#7c3aed;color:#7c3aed;">왕홍·소개자 관리</button>
+    <button class="btn gold-btn" onclick="exportExcel()" style="font-size:11px;">엑셀 다운로드</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showPage('bookings',this)">예약 명단</div>
+  <div class="tab" onclick="showPage('calendar',this)">일정 캘린더</div>
+  <div class="tab" onclick="showPage('analysis',this)">구분별 분석</div>
+  <div class="tab" onclick="showPage('daily',this)">일일·월 현황</div>
+  <div class="tab" onclick="showPage('hospitals',this)">병원 현황</div>
+  <div class="tab" onclick="showPage('hospital_rev',this)">병원별 매출/입금</div>
+  <div class="tab" onclick="showPage('foreign',this)">외국인환자 보고</div>
+  <div class="tab" onclick="showPage('dashboard',this)">대시보드</div>
+</div>
+
+<div class="content">
+
+<!-- 예약 명단 -->
+<div id="page-bookings" class="page-section active">
+  <div class="stats-row">
+    <div class="sc"><div class="sl">전체 예약</div><div class="sv" id="st-total">-</div><div class="ss">건</div></div>
+    <div class="sc gold"><div class="sl">총 결제금액</div><div class="sv" id="st-rev">-</div><div class="ss">원</div></div>
+    <div class="sc green"><div class="sl">병원→FK 수수료</div><div class="sv" id="st-hcomm">-</div><div class="ss">원</div></div>
+    <div class="sc purple"><div class="sl">FK→소개자 수수료</div><div class="sv" id="st-wcomm">-</div><div class="ss">원</div></div>
+    <div class="sc blue"><div class="sl">FK 순매출</div><div class="sv" id="st-net">-</div><div class="ss">원</div></div>
+    <div class="sc red"><div class="sl">노쇼/취소</div><div class="sv" id="st-ns">-</div><div class="ss">건</div></div>
+    <div class="sc"><div class="sl">VAT포함 수수료</div><div class="sv" id="st-vat-in">-</div><div class="ss">원</div></div>
+    <div class="sc"><div class="sl">VAT별도 수수료</div><div class="sv" id="st-vat-ex">-</div><div class="ss">원</div></div>
+    <div class="sc"><div class="sl">세금계산서 발행</div><div class="sv" id="st-tax">-</div><div class="ss">건</div></div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="bk-search" placeholder="이름·병원·소개자 검색..." oninput="filterBookings()">
+    <select id="bk-hosp" onchange="filterBookings()"><option value="">전체 병원</option></select>
+    <select id="bk-inflow" onchange="filterBookings()">
+      <option value="">전체 유입경로</option>
+      <option value="왕홍">왕홍</option><option value="가이드">가이드</option>
+      <option value="에이전시">에이전시</option><option value="중국사업부">중국사업부</option><option value="플랫폼">플랫폼</option>
+    </select>
+    <select id="bk-month" onchange="filterBookings()">
+      <option value="">전체 기간</option>
+      <option value="2026-03">3월</option><option value="2026-04">4월</option>
+      <option value="2026-05">5월</option><option value="2026-06">6월</option><option value="2026-07">7월</option>
+    </select>
+    <select id="bk-status" onchange="filterBookings()">
+      <option value="">전체 상태</option>
+      <option>확정</option><option>대기</option><option>완료</option><option>취소</option><option>노쇼</option>
+    </select>
+    <button class="btn primary" onclick="openBkModal()">+ 신규 예약 등록</button>
+  </div>
+  <div style="overflow-x:auto;">
+  <table>
+    <thead id="bk-thead"><tr>
+      <th data-col="no" onclick="sortBk('no')">No<span class="sa"></span></th>
+      <th data-col="name" onclick="sortBk('name')">환자명<span class="sa"></span></th>
+      <th data-col="dob" onclick="sortBk('dob')">생년월일<span class="sa"></span></th>
+      <th>초진/재진</th>
+      <th data-col="gender" onclick="sortBk('gender')">성별<span class="sa"></span></th>
+      <th data-col="nationality" onclick="sortBk('nationality')">국적<span class="sa"></span></th>
+      <th data-col="hospital" onclick="sortBk('hospital')">예약병원<span class="sa"></span></th>
+      <th data-col="datetime" onclick="sortBk('datetime')" class="sort-asc">예약일시<span class="sa"></span></th>
+      <th data-col="dept" onclick="sortBk('dept')">진료과목<span class="sa"></span></th>
+      <th>주요시술</th>
+      <th data-col="amount" onclick="sortBk('amount')">결제금액<span class="sa"></span></th>
+      <th>예상시술액</th>
+      <th data-col="inflow_type" onclick="sortBk('inflow_type')">유입경로<span class="sa"></span></th>
+      <th data-col="introducer" onclick="sortBk('introducer')">소개자<span class="sa"></span></th>
+      <th>병원수수료율</th>
+      <th>병원→FK</th>
+      <th>FK→소개자</th>
+      <th>FK 순매출</th>
+      <th>부가세</th>
+      <th>세금계산서</th>
+      <th>병원입금일</th>
+      <th>병원입금액</th>
+      <th>지급수수료액</th>
+      <th data-col="status" onclick="sortBk('status')">상태<span class="sa"></span></th>
+      <th>노쇼</th>
+      <th>관리</th>
+    </tr></thead>
+    <tbody id="bk-tbody"></tbody>
+  </table>
+  </div>
+</div>
+
+<!-- 일정 캘린더 -->
+<div id="page-calendar" class="page-section">
+  <div class="card-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <button class="btn" onclick="changeMonth(-1)">◀ 이전달</button>
+      <h2 style="font-size:14px;font-weight:600;" id="cal-title"></h2>
+      <button class="btn" onclick="changeMonth(1)">다음달 ▶</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:6px;">
+      <div style="text-align:center;font-size:11px;color:#dc2626;padding:4px;">일</div>
+      <div style="text-align:center;font-size:11px;color:#888;padding:4px;">월</div>
+      <div style="text-align:center;font-size:11px;color:#888;padding:4px;">화</div>
+      <div style="text-align:center;font-size:11px;color:#888;padding:4px;">수</div>
+      <div style="text-align:center;font-size:11px;color:#888;padding:4px;">목</div>
+      <div style="text-align:center;font-size:11px;color:#888;padding:4px;">금</div>
+      <div style="text-align:center;font-size:11px;color:#4f86c6;padding:4px;">토</div>
+    </div>
+    <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;"></div>
+    <div id="cal-detail" style="display:none;margin-top:12px;border-top:1px solid #eee;padding-top:12px;"></div>
+  </div>
+</div>
+
+<!-- 구분별 분석 -->
+<div id="page-analysis" class="page-section">
+  <div class="subtabs">
+    <div class="subtab active" onclick="showSub('analysis','왕홍별',this)">왕홍별</div>
+    <div class="subtab" onclick="showSub('analysis','가이드별',this)">가이드별</div>
+    <div class="subtab" onclick="showSub('analysis','에이전시별',this)">에이전시별</div>
+    <div class="subtab" onclick="showSub('analysis','회사별',this)">회사(중국사업부/플랫폼)</div>
+  </div>
+  <div id="analysis-content"></div>
+</div>
+
+<!-- 일일·월 현황 -->
+<div id="page-daily" class="page-section">
+  <div class="subtabs">
+    <div class="subtab active" onclick="showSub('daily','일별',this)">일별 현황</div>
+    <div class="subtab" onclick="showSub('daily','월별',this)">월별 누적</div>
+  </div>
+  <div class="stats-row" id="daily-stats"></div>
+  <div id="daily-content"></div>
+</div>
+
+<!-- 병원 현황 -->
+<div id="page-hospitals" class="page-section">
+  <div class="toolbar">
+    <select id="h-contract" onchange="filterHospitals()">
+      <option value="">전체 계약상태</option>
+      <option value="계약완료">계약완료</option><option value="협의중">협의중</option><option value="미정">미정</option>
+    </select>
+  </div>
+  <div class="cat-filter-row" id="cat-filter-row"></div>
+  <div id="hospital-grid" class="hospital-grid"></div>
+</div>
+
+<!-- 병원별 매출/입금 -->
+<div id="page-hospital_rev" class="page-section">
+  <div class="stats-row">
+    <div class="sc gold"><div class="sl">총 결제금액</div><div class="sv" id="hr-total">-</div></div>
+    <div class="sc green"><div class="sl">FK 수수료 합계</div><div class="sv" id="hr-comm">-</div></div>
+    <div class="sc blue"><div class="sl">병원 입금 예정액</div><div class="sv" id="hr-hospay">-</div></div>
+    <div class="sc red"><div class="sl">미입금 잔액</div><div class="sv" id="hr-unpaid">-</div></div>
+  </div>
+  <div class="card-box" style="margin-bottom:14px;">
+    <div class="section-title">병원별 매출 / 입금 현황</div>
+    <div style="overflow-x:auto;">
+    <table><thead><tr>
+      <th onclick="sortHR('name')" data-col="name">병원명<span class="sa"></span></th>
+      <th onclick="sortHR('cnt')" data-col="cnt">내원건수<span class="sa"></span></th>
+      <th onclick="sortHR('rev')" data-col="rev" class="sort-desc">총 결제금액<span class="sa"></span></th>
+      <th>FK수수료율</th>
+      <th onclick="sortHR('comm')" data-col="comm">FK 수수료<span class="sa"></span></th>
+      <th onclick="sortHR('hospay')" data-col="hospay">병원입금 예정<span class="sa"></span></th>
+      <th>병원 입금일</th>
+      <th onclick="sortHR('paid')" data-col="paid">입금 완료액<span class="sa"></span></th>
+      <th onclick="sortHR('unpaid')" data-col="unpaid">미입금 잔액<span class="sa"></span></th>
+      <th>입금상태</th>
+    </tr></thead>
+    <tbody id="hr-tbody"></tbody></table>
+    </div>
+  </div>
+  <div class="card-box">
+    <div class="section-title">건별 입금 상세</div>
+    <div style="overflow-x:auto;">
+    <table><thead><tr>
+      <th>환자명</th><th>병원</th><th>시술일</th><th>결제금액</th>
+      <th>FK수수료율</th><th>FK수수료</th><th>병원입금예정일</th><th>입금완료액</th><th>미입금</th><th>상태</th>
+    </tr></thead>
+    <tbody id="hr-detail-tbody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- 외국인환자 보고 -->
+<div id="page-foreign" class="page-section">
+  <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:10px 14px;font-size:11px;color:#92400e;margin-bottom:14px;">
+    외국인환자 유치 보고용 — 연 1회 기관 제출 기준 | 현황(실적) + 예측 포함
+  </div>
+  <div class="stats-row">
+    <div class="sc"><div class="sl">문의인원(전체예약)</div><div class="sv" id="fg-inquiry">-</div></div>
+    <div class="sc blue"><div class="sl">예약인원</div><div class="sv" id="fg-reserved">-</div></div>
+    <div class="sc green"><div class="sl">시술인원(완료)</div><div class="sv" id="fg-treated">-</div></div>
+    <div class="sc gold"><div class="sl">매출합계</div><div class="sv" id="fg-rev">-</div></div>
+    <div class="sc purple"><div class="sl">FK 순매출</div><div class="sv" id="fg-net">-</div></div>
+    <div class="sc"><div class="sl">예약전환율</div><div class="sv" id="fg-conv1">-</div></div>
+    <div class="sc"><div class="sl">시술전환율</div><div class="sv" id="fg-conv2">-</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+    <div class="card-box">
+      <div class="section-title">월별 누적 현황 (시술기준)</div>
+      <table><thead><tr><th>월</th><th>문의</th><th>예약</th><th>시술</th><th>매출합계</th><th>FK순매출</th><th>노쇼</th></tr></thead>
+      <tbody id="fg-monthly-tbody"></tbody></table>
+    </div>
+    <div class="card-box">
+      <div class="section-title">구분별 현황</div>
+      <table><thead><tr><th>구분</th><th>소개자</th><th>예약건</th><th>시술건</th><th>매출</th><th>FK순매출</th></tr></thead>
+      <tbody id="fg-inflow-tbody"></tbody></table>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+    <div class="card-box">
+      <div class="section-title">국적별 현황</div>
+      <table><thead><tr><th>국적</th><th>예약건</th><th>시술건</th><th>매출합계</th><th>비중</th></tr></thead>
+      <tbody id="fg-nation-tbody"></tbody></table>
+    </div>
+    <div class="card-box">
+      <div class="section-title">진료과목별 현황</div>
+      <table><thead><tr><th>진료과목</th><th>예약건</th><th>시술건</th><th>매출합계</th><th>주요시술</th></tr></thead>
+      <tbody id="fg-dept-tbody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- 대시보드 -->
+<div id="page-dashboard" class="page-section">
+  <div class="stats-row">
+    <div class="sc gold"><div class="sl">총 결제금액</div><div class="sv" id="db-rev">-</div></div>
+    <div class="sc"><div class="sl">전체 예약</div><div class="sv" id="db-cnt">-</div></div>
+    <div class="sc blue"><div class="sl">FK 순매출</div><div class="sv" id="db-net">-</div></div>
+    <div class="sc purple"><div class="sl">활성 소개자</div><div class="sv" id="db-wang">-</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div class="card-box"><div class="section-title">병원별 예약 건수</div><div id="ch-hosp" class="chart-wrap"></div></div>
+    <div class="card-box"><div class="section-title">월별 예약 추이</div><div id="ch-month" class="chart-wrap"></div></div>
+    <div class="card-box"><div class="section-title">소개자별 유치 건수</div><div id="ch-wang" class="chart-wrap"></div></div>
+    <div class="card-box"><div class="section-title">병원별 FK 순매출</div><div id="ch-net" class="chart-wrap"></div></div>
+  </div>
+</div>
+
+<!-- 왕홍·소개자 관리 -->
+<div id="page-wanghong_mgmt" class="page-section">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <h2 style="font-size:14px;font-weight:600;">왕홍 / 소개자 마스터 관리</h2>
+    <button class="btn primary" onclick="openWmModal()">+ 소개자 추가</button>
+  </div>
+  <table><thead><tr>
+    <th>이름</th><th>구분</th><th>소속/채널</th><th>연락처</th>
+    <th>FK→소개자 수수료율</th><th>연결 환자수</th><th>누적 매출</th><th>FK 순매출</th><th>관리</th>
+  </tr></thead>
+  <tbody id="wm-tbody"></tbody></table>
+</div>
+
+</div>
+
+<!-- 예약 등록/수정 모달 -->
+<div class="modal-overlay" id="bk-modal" onclick="if(event.target===this)closeModal('bk-modal')">
+<div class="modal">
+  <h2 id="bk-modal-title">신규 예약 등록</h2>
+  <div class="fg">
+    <div class="fsec">기본 정보</div>
+    <div class="fitem"><label>환자명 (영문)</label><input type="text" id="f-name" placeholder="ZHANG JING"></div>
+    <div class="fitem"><label>예약 병원</label><select id="f-hospital"></select></div>
+    <div class="fitem"><label>예약 일시</label><input type="datetime-local" id="f-datetime"></div>
+    <div class="fitem"><label>진료과목</label>
+      <select id="f-dept"><option>피부</option><option>성형외과</option><option>줄기세포</option><option>체형</option><option>안과</option><option>산부인과</option><option>수액</option><option>기타</option></select>
+    </div>
+    <div class="fitem"><label>성별</label>
+      <select id="f-gender"><option value="F">여성 (F)</option><option value="M">남성 (M)</option></select>
+    </div>
+    <div class="fitem"><label>생년월일 <span style="font-weight:400;color:#aaa;">(예: 19990101 또는 1999-01-01)</span></label>
+      <input type="text" id="f-dob" placeholder="19990101" maxlength="10" oninput="formatDob(this)" autocomplete="off">
+    </div>
+    <div class="fitem"><label>국적</label><input type="text" id="f-nationality" value="중국"></div>
+    <div class="fitem"><label>주요 시술</label><input type="text" id="f-treatment" placeholder="超声刀、热玛吉、丽珠兰"></div>
+
+    <div class="fsec">유입 경로</div>
+    <div class="fitem"><label>유입 구분</label>
+      <select id="f-inflow-type" onchange="updateInflowSel()">
+        <option value="왕홍">왕홍</option><option value="가이드">가이드</option>
+        <option value="에이전시">에이전시</option><option value="중국사업부">중국사업부</option><option value="플랫폼">플랫폼</option>
+      </select>
+    </div>
+    <div class="fitem"><label>소개자</label><select id="f-introducer" onchange="calcPreview()"></select></div>
+
+    <div class="fsec">금액 및 수수료</div>
+    <div class="fitem">
+      <label>결제금액 (만원 단위 입력)</label>
+      <input type="number" id="f-amount" placeholder="예: 292.6 → 2,926,000원" step="0.01" oninput="calcPreview()">
+      <div class="won-hint" id="f-amount-hint"></div>
+    </div>
+    <div class="fitem"><label>예상 시술액 (만원 단위)</label><input type="number" id="f-expected" placeholder="0" step="0.01"></div>
+    <div class="fitem"><label>병원 수수료율 (%)</label>
+      <select id="f-hrate" onchange="calcPreview()">
+        <option value="30">30%</option><option value="20">20%</option><option value="15">15%</option>
+        <option value="12">12%</option><option value="10">10%</option><option value="40">40%</option><option value="0">0%</option>
+      </select>
+    </div>
+    <div class="fitem"><label>부가세 조건</label>
+      <select id="f-vat">
+        <option value="포함">포함 (수수료에 VAT 포함)</option>
+        <option value="별도">별도 (수수료 + VAT 10% 추가)</option>
+      </select>
+    </div>
+    <div class="fitem"><label>세금계산서 발행</label>
+      <select id="f-tax-invoice">
+        <option value="N">미발행</option>
+        <option value="Y">발행</option>
+      </select>
+    </div>
+    <div class="fitem"><label>병원 입금일</label><input type="date" id="f-hpaydate"></div>
+    <div class="fitem"><label>병원 입금액 (만원)</label><input type="number" id="f-hpaidamt" placeholder="0" step="0.01"></div>
+    <div class="fitem"><label>지급 수수료액 (만원)</label><input type="number" id="f-paidcomm" placeholder="자동계산 후 수정 가능" step="0.01"></div>
+
+    <div class="full" style="background:#f9f9f7;border-radius:6px;padding:10px;margin-top:2px;">
+      <div style="font-size:11px;font-weight:600;color:#B8960C;margin-bottom:6px;">수수료 미리보기</div>
+      <div id="fee-preview" style="font-size:11px;color:#555;line-height:2;"></div>
+    </div>
+
+    <div class="fsec">상태</div>
+    <div class="fitem"><label>상태</label>
+      <select id="f-status"><option>확정</option><option>대기</option><option>완료</option><option>취소</option><option>노쇼</option></select>
+    </div>
+    <div class="fitem"><label>노쇼 여부</label>
+      <select id="f-noshow"><option value="N">아니오</option><option value="Y">노쇼</option></select>
+    </div>
+    <div class="fitem full"><label>비고</label><input type="text" id="f-note" placeholder="메모"></div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn danger sm" id="bk-del-btn" onclick="deleteBk()" style="display:none;margin-right:auto;">삭제</button>
+    <button class="btn" onclick="closeModal('bk-modal')">취소</button>
+    <button class="btn primary" onclick="saveBk()">저장</button>
+  </div>
+</div>
+</div>
+
+<!-- 왕홍 모달 -->
+<div class="modal-overlay" id="wm-modal" onclick="if(event.target===this)closeModal('wm-modal')">
+<div class="modal" style="width:460px;">
+  <h2 id="wm-modal-title">소개자 추가</h2>
+  <div class="fg">
+    <div class="fitem"><label>이름</label><input type="text" id="wm-name" placeholder="李雪菲"></div>
+    <div class="fitem"><label>구분</label>
+      <select id="wm-type"><option value="왕홍">왕홍</option><option value="가이드">가이드</option><option value="에이전시">에이전시</option><option value="중국사업부">중국사업부</option><option value="플랫폼">플랫폼</option></select>
+    </div>
+    <div class="fitem"><label>소속 / 채널명</label><input type="text" id="wm-channel" placeholder="웨이보 채널명 등"></div>
+    <div class="fitem"><label>연락처 (WeChat 등)</label><input type="text" id="wm-contact" placeholder=""></div>
+    <div class="fitem"><label>FK→소개자 수수료율 (%)</label><input type="number" id="wm-rate" placeholder="10" min="0" max="100"></div>
+    <div class="fitem"><label>비고</label><input type="text" id="wm-note" placeholder=""></div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn danger sm" id="wm-del-btn" onclick="deleteWm()" style="display:none;margin-right:auto;">삭제</button>
+    <button class="btn" onclick="closeModal('wm-modal')">취소</button>
+    <button class="btn primary" onclick="saveWm()">저장</button>
+  </div>
+</div>
+</div>
+
+<script>
+// ── 카테고리 ──
+const CATS={
+  '가슴성형':['뷰성형외과','글로비성형외과','루비성형외과(신사점)','드림성형외과','원진성형외과피부과','더뷰티성형외과'],
+  '눈성형':['원진성형외과피부과','드림성형외과','루비성형외과(신사점)','뷰성형외과','더뷰티성형외과','글로비성형외과','원셀의원','신상성형외과','이에스청담성형외과','강남서울안과','페이스라인성형외과'],
+  '수액':['강남스마트'],
+  '줄기세포':['셀로라의원','지유의원(사적인아름다움)','GV성형외과','셀리닉의원','JD피부성형센터(장덕한방)','글로비성형외과','원셀의원','원진성형외과피부과'],
+  '체형':['고운몸의원','라미체의원','강남다움의원'],
+  '코성형':['원셀의원','원진성형외과피부과','페이스라인성형외과','드림성형외과','루비성형외과(신사점)','글로비성형외과','더뷰티성형외과','신상성형외과','뷰성형외과'],
+  '탈모':['모모성형외과'],
+  '피부':['리프톤의원','청담서클의원']
+};
+
+// ── 병원 마스터 30개 ──
+const HD=[
+  {no:1,name:'GV성형외과',dept:'성형외과',manager:'홍성민 이사',tel:'010-2000-7373',contract:'미정',commission:'피부20%/성형30%',vat:'별도',paydate:''},
+  {no:2,name:'JD피부성형센터(장덕한방)',dept:'피부과/한방',manager:'이은진 팀장',tel:'010-9627-6150',contract:'계약완료',commission:'30%',vat:'별도',paydate:''},
+  {no:3,name:'강남다움의원',dept:'의원',manager:'신부규 이사',tel:'010-8349-3311',contract:'협의중',commission:'30%',vat:'별도',paydate:''},
+  {no:4,name:'강남서울안과',dept:'안과',manager:'심필보 대표',tel:'010-3413-9958',contract:'미정',commission:'검사비제외30%',vat:'별도',paydate:''},
+  {no:5,name:'강남스마트',dept:'신경과(수액)',manager:'-',tel:'-',contract:'미정',commission:'20~30%',vat:'포함',paydate:'말일'},
+  {no:6,name:'고운몸의원',dept:'성형외과(바디)',manager:'박규보 대표',tel:'010-7759-8535',contract:'미정',commission:'협의중',vat:'별도',paydate:''},
+  {no:7,name:'글로비성형외과',dept:'성형외과',manager:'채진명 팀장',tel:'010-5014-6997',contract:'협의중',commission:'피부20%/성형30%',vat:'별도',paydate:'익월10일'},
+  {no:8,name:'더뷰티성형외과',dept:'성형외과',manager:'-',tel:'-',contract:'협의중',commission:'20%',vat:'별도',paydate:''},
+  {no:9,name:'드림성형외과',dept:'성형외과',manager:'맹흔 중국담당',tel:'010-5153-1617',contract:'계약완료',commission:'20%',vat:'별도',paydate:''},
+  {no:10,name:'라미체의원',dept:'내과/피부과',manager:'정홍양 파트장',tel:'010-7785-2389',contract:'계약완료',commission:'20%(VAT포함)',vat:'포함',paydate:'청구7~14일전'},
+  {no:11,name:'루비성형외과(신사점)',dept:'성형외과',manager:'박경이 차장',tel:'010-9809-8081',contract:'협의중',commission:'30%',vat:'포함',paydate:'매월15일'},
+  {no:12,name:'리프톤의원',dept:'피부과',manager:'-',tel:'-',contract:'미정',commission:'협의중',vat:'별도',paydate:''},
+  {no:13,name:'바른길산부인과',dept:'산부인과',manager:'윤문경',tel:'010-2191-0998',contract:'계약완료',commission:'줄기세포포함30%/미포함20%',vat:'별도',paydate:''},
+  {no:14,name:'벤자민의원',dept:'피부과',manager:'박혜린 중국담당',tel:'010-',contract:'미정',commission:'12%(통역X)/15%(통역)',vat:'별도',paydate:''},
+  {no:15,name:'뷰성형외과',dept:'성형외과',manager:'김엽 중국주임',tel:'010-3808-7174',contract:'협의중',commission:'30%(VAT포함)',vat:'포함',paydate:''},
+  {no:16,name:'셀로라의원',dept:'의원(줄기세포)',manager:'-',tel:'-',contract:'미정',commission:'20%',vat:'별도',paydate:''},
+  {no:17,name:'셀리닉의원',dept:'의원(VIP줄기세포)',manager:'송은서 총괄이사',tel:'010-3850-6085',contract:'미정',commission:'협의중',vat:'별도',paydate:''},
+  {no:18,name:'신상성형외과',dept:'성형외과',manager:'박정민 팀장',tel:'010-2439-0568',contract:'계약완료',commission:'30%(1억↑40%)',vat:'포함',paydate:'익월15일·말일 2회'},
+  {no:19,name:'신소애여성의원',dept:'산부인과',manager:'-',tel:'-',contract:'협의중',commission:'협의중',vat:'별도',paydate:''},
+  {no:20,name:'오크우드봄의원',dept:'의원',manager:'박아현 상담이사',tel:'010-4114-2043',contract:'협의중',commission:'피부20%/기타30%',vat:'별도',paydate:''},
+  {no:21,name:'원셀의원',dept:'의원(줄기세포)',manager:'김선희 이사',tel:'010-5045-8484',contract:'협의중',commission:'피부15%/성형30%',vat:'별도',paydate:''},
+  {no:22,name:'원진성형외과피부과',dept:'성형외과/피부과',manager:'-',tel:'-',contract:'미정',commission:'협의중',vat:'별도',paydate:''},
+  {no:23,name:'이에스청담성형외과',dept:'성형외과/피부과',manager:'-',tel:'-',contract:'미정',commission:'주사20%/수술30%',vat:'별도',paydate:'매월15일'},
+  {no:24,name:'지유의원(사적인아름다움)',dept:'의원',manager:'-',tel:'-',contract:'미정',commission:'10%',vat:'포함',paydate:'첫주 금요일'},
+  {no:25,name:'차움',dept:'종합검진',manager:'양민혜 파트장',tel:'010-8607-6696',contract:'협의중',commission:'20%',vat:'별도',paydate:''},
+  {no:26,name:'청담서클의원',dept:'의원',manager:'-',tel:'-',contract:'미정',commission:'협의중',vat:'별도',paydate:'2~3일후'},
+  {no:27,name:'트리니티라파엘로청담의원',dept:'의원',manager:'심필보 대표',tel:'010-3413-9958',contract:'미정',commission:'협의중',vat:'별도',paydate:''},
+  {no:28,name:'페이스라인성형외과',dept:'성형외과',manager:'박준 대표',tel:'010-9116-3320',contract:'미정',commission:'20%',vat:'별도',paydate:''},
+  {no:29,name:'히어산부인과',dept:'산부인과',manager:'이희영 경영이사',tel:'010-4815-9150',contract:'협의중',commission:'20%',vat:'별도',paydate:''},
+  {no:30,name:'히어피부과',dept:'피부과',manager:'이희영 경영이사',tel:'010-4815-9150',contract:'협의중',commission:'15%',vat:'별도',paydate:''},
+];
+
+// ── 왕홍/소개자 마스터 ──
+let WM=[
+  {id:1,name:'刘琼琼',type:'왕홍',channel:'웨이보',contact:'',rate:10,note:''},
+  {id:2,name:'杨婷婷',type:'왕홍',channel:'샤오홍슈',contact:'',rate:10,note:''},
+  {id:3,name:'朴槿惠',type:'왕홍',channel:'틱톡',contact:'',rate:10,note:''},
+  {id:4,name:'李雪菲',type:'왕홍',channel:'웨이보',contact:'',rate:0,note:'이설비 팀장'},
+  {id:5,name:'刘子晴',type:'왕홍',channel:'',contact:'',rate:10,note:''},
+  {id:6,name:'明玥',type:'왕홍',channel:'',contact:'',rate:10,note:''},
+  {id:7,name:'李佳铭',type:'왕홍',channel:'',contact:'',rate:10,note:''},
+  {id:8,name:'十一',type:'왕홍',channel:'',contact:'',rate:10,note:''},
+  {id:9,name:'KIM在韩',type:'가이드',channel:'',contact:'',rate:10,note:'재한교포'},
+  {id:10,name:'zuam',type:'에이전시',channel:'',contact:'',rate:10,note:''},
+  {id:11,name:'중국사업부',type:'중국사업부',channel:'',contact:'',rate:0,note:''},
+  {id:12,name:'플랫폼',type:'플랫폼',channel:'',contact:'',rate:0,note:''},
+];
+let wmEditId=null;
+
+// ── 금액 ──
+function r2w(v){return Math.round((v||0)*10000);}
+function fw(w){return w>0?w.toLocaleString('ko-KR')+'원':'-';}
+function getRate(name){const w=WM.find(x=>x.name===name);return w?w.rate:0;}
+function calcC(b){
+  const won=r2w(b.amount);
+  const hcBase=Math.round(won*(b.hosp_comm_rate||0)/100);
+  // 부가세 별도: 병원이 수수료+VAT 10% 추가 지급 → FK 실수령 = hcBase × 1.1
+  // 부가세 포함: 수수료 안에 VAT 포함 → FK 실수령 = hcBase
+  const hc = b.vat==='별도' ? Math.round(hcBase*1.1) : hcBase;
+  const vatAmt = b.vat==='별도' ? Math.round(hcBase*0.1) : 0;
+  const wr=getRate(b.introducer);
+  const wc=Math.round(won*wr/100);
+  return{won,hc,wc,net:hc-wc,hospPay:won-hc,vatAmt,hcBase};
+}
+
+// ── 예약 데이터 ──
+let BK=[
+  {id:1,name:'TENGYAJING',hospital:'신상성형외과',datetime:'2026-03-25 14:00',treatment:'超声刀、玻尿酸、水光、肉毒',amount:425.7,expected:500,hosp_comm_rate:30,status:'완료',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'刘琼琼',vat:'포함',tax_invoice:'N'},
+  {id:2,name:'QIXIAO',hospital:'신상성형외과',datetime:'2026-03-25 14:00',treatment:'超声刀、祛痘治疗',amount:392.7,expected:450,hosp_comm_rate:30,status:'완료',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'刘琼琼',vat:'포함',tax_invoice:'N'},
+  {id:3,name:'MIAOXIAJUN',hospital:'신상성형외과',datetime:'2026-04-25 10:00',treatment:'超声刀、丽珠兰、肉毒、玻尿酸',amount:410.3,expected:450,hosp_comm_rate:30,status:'완료',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'刘琼琼',vat:'포함',tax_invoice:'N'},
+  {id:4,name:'XUWANGYAN',hospital:'신상성형외과',datetime:'2026-04-25 10:00',treatment:'黄金微针、丽珠兰',amount:99,expected:120,hosp_comm_rate:30,status:'완료',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'刘琼琼',vat:'포함',tax_invoice:'N'},
+  {id:5,name:'WANGNA',hospital:'청담서클의원',datetime:'2026-06-04 11:30',treatment:'黄金微针、丽珠兰',amount:253,expected:280,hosp_comm_rate:20,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'十一',vat:'포함',tax_invoice:'N'},
+  {id:6,name:'ZHAOWENDHAN',hospital:'신상성형외과',datetime:'2026-06-05 15:30',treatment:'超声刀400、肉毒、onda',amount:292.6,expected:320,hosp_comm_rate:30,status:'확정',note:'',gender:'M',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'朴槿惠',vat:'포함',tax_invoice:'N'},
+  {id:7,name:'ZHAOWENJIA',hospital:'신상성형외과',datetime:'2026-06-05 15:30',treatment:'超声刀600、肉毒、onda',amount:370.7,expected:400,hosp_comm_rate:30,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'朴槿惠',vat:'포함',tax_invoice:'N'},
+  {id:8,name:'ZHANGZIJING',hospital:'지유의원(사적인아름다움)',datetime:'2026-05-31 10:30',treatment:'',amount:135,expected:150,hosp_comm_rate:20,status:'완료',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'刘子晴',vat:'포함',tax_invoice:'N'},
+  {id:9,name:'LIWENHUI',hospital:'신상성형외과',datetime:'2026-06-02 11:00',treatment:'超声刀、onda、溶脂',amount:551.98,expected:600,hosp_comm_rate:30,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'杨婷婷',vat:'포함',tax_invoice:'N'},
+  {id:10,name:'LIJIAO',hospital:'신상성형외과',datetime:'2026-06-02 11:00',treatment:'超声刀、热玛吉、onda',amount:517,expected:550,hosp_comm_rate:30,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'杨婷婷',vat:'포함',tax_invoice:'N'},
+  {id:11,name:'YANGTINGTING',hospital:'신상성형외과',datetime:'2026-06-02 11:00',treatment:'超声刀、溶脂',amount:183.7,expected:200,hosp_comm_rate:30,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'杨婷婷',vat:'포함',tax_invoice:'N'},
+  {id:12,name:'WENGQI',hospital:'벤자민의원',datetime:'2026-06-12 10:00',treatment:'',amount:0,expected:0,hosp_comm_rate:12,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'李佳铭',vat:'포함',tax_invoice:'N'},
+  {id:13,name:'WENGZI',hospital:'벤자민의원',datetime:'2026-06-12 10:00',treatment:'',amount:0,expected:0,hosp_comm_rate:12,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'李佳铭',vat:'포함',tax_invoice:'N'},
+  {id:14,name:'WENGLANG',hospital:'벤자민의원',datetime:'2026-06-12 10:00',treatment:'',amount:0,expected:0,hosp_comm_rate:12,status:'확정',note:'',gender:'M',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'李佳铭',vat:'포함',tax_invoice:'N'},
+  {id:15,name:'CHENGXUANQI',hospital:'신상성형외과',datetime:'2026-06-04 14:30',treatment:'超声刀、丽珠兰',amount:129.8,expected:150,hosp_comm_rate:30,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'明玥',vat:'포함',tax_invoice:'N'},
+  {id:16,name:'WUBOXUAN',hospital:'신상성형외과',datetime:'2026-06-04 14:30',treatment:'超声刀、丽珠兰',amount:226.38,expected:250,hosp_comm_rate:30,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'明玥',vat:'포함',tax_invoice:'N'},
+  {id:17,name:'QIBOJUN',hospital:'신상성형외과',datetime:'2026-06-04 14:30',treatment:'超声刀、丽珠兰',amount:152.9,expected:180,hosp_comm_rate:30,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'明玥',vat:'포함',tax_invoice:'N'},
+  {id:18,name:'HEYUWEI',hospital:'신상성형외과',datetime:'2026-06-05 11:30',treatment:'超声刀、热玛吉、丽珠兰',amount:799.7,expected:850,hosp_comm_rate:30,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'朴槿惠',vat:'포함',tax_invoice:'N'},
+  {id:19,name:'NISHUO',hospital:'신상성형외과',datetime:'2026-06-05 11:30',treatment:'超声刀、丽珠兰、玻尿酸',amount:503.9,expected:550,hosp_comm_rate:30,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'朴槿惠',vat:'포함',tax_invoice:'N'},
+  {id:20,name:'ZHANGZIJING2',hospital:'지유의원(사적인아름다움)',datetime:'2026-05-31 10:30',treatment:'超声刀、丽珠兰、玻尿酸',amount:135.8,expected:160,hosp_comm_rate:20,status:'완료',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'刘子晴',vat:'포함',tax_invoice:'N'},
+  {id:21,name:'MOU XIAOHONG',hospital:'신상성형외과',datetime:'2026-06-11 15:00',treatment:'',amount:0,expected:0,hosp_comm_rate:0,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'李雪菲',vat:'포함',tax_invoice:'N'},
+  {id:22,name:'LEI NA',hospital:'신상성형외과',datetime:'2026-06-22 10:00',treatment:'',amount:0,expected:0,hosp_comm_rate:30,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'杨婷婷',vat:'포함',tax_invoice:'N'},
+  {id:23,name:'ZHUZHEQING',hospital:'신상성형외과',datetime:'2026-06-22 10:00',treatment:'',amount:0,expected:0,hosp_comm_rate:30,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'杨婷婷',vat:'포함',tax_invoice:'N'},
+  {id:24,name:'ZHAOYE',hospital:'신상성형외과',datetime:'2026-07-04 11:00',treatment:'',amount:0,expected:0,hosp_comm_rate:0,status:'대기',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'李雪菲',vat:'포함',tax_invoice:'N'},
+  {id:25,name:'LIANG YINXI',hospital:'신상성형외과',datetime:'2026-07-04 11:00',treatment:'',amount:0,expected:0,hosp_comm_rate:0,status:'대기',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'李雪菲',vat:'포함',tax_invoice:'N'},
+  {id:26,name:'LIANG YINJIA',hospital:'신상성형외과',datetime:'2026-07-04 11:00',treatment:'',amount:0,expected:0,hosp_comm_rate:0,status:'대기',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'李雪菲',vat:'포함',tax_invoice:'N'},
+  {id:27,name:'PENG PANYU',hospital:'신상성형외과',datetime:'2026-07-06 11:00',treatment:'',amount:0,expected:0,hosp_comm_rate:0,status:'대기',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'李雪菲',vat:'포함',tax_invoice:'N'},
+  {id:28,name:'PENG JING',hospital:'신상성형외과',datetime:'2026-06-10 14:00',treatment:'',amount:0,expected:0,hosp_comm_rate:0,status:'확정',note:'리프팅',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'李雪菲',vat:'포함',tax_invoice:'N'},
+  {id:29,name:'LIN CHIAOWEN',hospital:'신상성형외과',datetime:'2026-06-27 13:00',treatment:'',amount:0,expected:0,hosp_comm_rate:0,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'李雪菲',vat:'포함',tax_invoice:'N'},
+  {id:30,name:'LIN YAJIE',hospital:'신상성형외과',datetime:'2026-06-27 13:00',treatment:'',amount:0,expected:0,hosp_comm_rate:0,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'李雪菲',vat:'포함',tax_invoice:'N'},
+  {id:31,name:'ZHOUYUETONG',hospital:'신상성형외과',datetime:'2026-06-10 14:00',treatment:'',amount:0,expected:0,hosp_comm_rate:0,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'李雪菲',vat:'포함',tax_invoice:'N'},
+  {id:32,name:'ZHOUJINFANG',hospital:'신상성형외과',datetime:'2026-06-10 14:00',treatment:'',amount:0,expected:0,hosp_comm_rate:0,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'李雪菲',vat:'포함',tax_invoice:'N'},
+  {id:33,name:'DUANSUMEI',hospital:'신상성형외과',datetime:'2026-06-10 14:00',treatment:'',amount:0,expected:0,hosp_comm_rate:0,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'李雪菲',vat:'포함',tax_invoice:'N'},
+  {id:34,name:'HUANGJING',hospital:'신상성형외과',datetime:'2026-06-20 10:00',treatment:'',amount:0,expected:0,hosp_comm_rate:30,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'가이드',introducer:'KIM在韩',vat:'포함',tax_invoice:'N'},
+  {id:35,name:'OUYANGHUI',hospital:'신상성형외과',datetime:'2026-06-20 10:00',treatment:'',amount:0,expected:0,hosp_comm_rate:30,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'가이드',introducer:'KIM在韩',vat:'포함',tax_invoice:'N'},
+  {id:36,name:'ZHANGLIWEI',hospital:'신상성형외과',datetime:'2026-06-20 10:00',treatment:'',amount:0,expected:0,hosp_comm_rate:30,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'가이드',introducer:'KIM在韩',vat:'포함',tax_invoice:'N'},
+  {id:37,name:'WZANGYIJIN',hospital:'루비성형외과(신사점)',datetime:'2026-06-24 11:00',treatment:'',amount:0,expected:0,hosp_comm_rate:30,status:'확정',note:'',gender:'F',dob:'',nationality:'중국',dept:'성형외과',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'에이전시',introducer:'zuam',vat:'포함',tax_invoice:'N'},
+  {id:38,name:'LIJIAAO',hospital:'신상성형외과',datetime:'2026-07-04 14:00',treatment:'',amount:0,expected:0,hosp_comm_rate:0,status:'대기',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'李雪菲',vat:'포함',tax_invoice:'N'},
+  {id:39,name:'YANGSIQI',hospital:'신상성형외과',datetime:'2026-07-04 14:00',treatment:'',amount:0,expected:0,hosp_comm_rate:0,status:'대기',note:'',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'李雪菲',vat:'포함',tax_invoice:'N'},
+  {id:40,name:'PENG JING (재진)',hospital:'신상성형외과',datetime:'2026-06-19 15:30',treatment:'리프팅',amount:0,expected:0,hosp_comm_rate:0,status:'확정',note:'재진',gender:'F',dob:'',nationality:'중국',dept:'피부',noshow:'N',hosp_paydate:'',hosp_paidamt:0,paid_comm:0,inflow_type:'왕홍',introducer:'李雪菲',vat:'포함',tax_invoice:'N'},
+]
+
+let bkEditId=null,calY=2026,calM=5,bkSortCol='datetime',bkSortAsc=true;
+let hrSort={col:'rev',asc:false};
+let curAnaSub='왕홍별',curDailySub='일별',activeCat='';
+
+// ── 초기화 ──
+const STAR_HOSP='신상성형외과';
+function hospLabel(name){return name===STAR_HOSP?'★ '+name:name;}
+
+function init(){
+  initApp();
+}
+
+
+// localStorage 미사용 - 엑셀 다운로드로 백업
+
+function initApp(){
+  // 신상성형외과 맨 위, 나머지 가나다순
+  const sorted=[...HD].sort((a,b)=>{
+    if(a.name===STAR_HOSP)return -1;
+    if(b.name===STAR_HOSP)return 1;
+    return a.name.localeCompare(b.name,'ko');
+  });
+  sorted.forEach(h=>{
+    const label=hospLabel(h.name);
+    const o=document.createElement('option');o.value=h.name;o.textContent=label;
+    if(h.name===STAR_HOSP){o.style.fontWeight='700';}
+    document.getElementById('bk-hosp').appendChild(o);
+    const o2=o.cloneNode(true);document.getElementById('f-hospital').appendChild(o2);
+  });
+  updateInflowSel();
+  renderBk(BK);
+}
+
+// ── 유입경로 소개자 셀렉트 갱신 ──
+function updateInflowSel(){
+  const type=document.getElementById('f-inflow-type').value;
+  const sel=document.getElementById('f-introducer');sel.innerHTML='';
+  WM.filter(w=>w.type===type).forEach(w=>{
+    const o=document.createElement('option');o.value=w.name;
+    o.textContent=`${w.name}${w.channel?' ('+w.channel+')':''} [수수료 ${w.rate}%]`;
+    sel.appendChild(o);
+  });
+  if(!sel.options.length){const o=document.createElement('option');o.value='';o.textContent='(해당없음)';sel.appendChild(o);}
+  calcPreview();
+}
+
+// ── 생년월일 자동 포맷 (8자리 → YYYY-MM-DD) ──
+function formatDob(el){
+  let v = el.value.replace(/[^0-9]/g,''); // 숫자만 추출
+  if(v.length >= 8){
+    v = v.substring(0,8);
+    el.value = v.substring(0,4)+'-'+v.substring(4,6)+'-'+v.substring(6,8);
+  } else if(v.length > 0){
+    // 입력 중 하이픈 자동 삽입 (4자리 후, 6자리 후)
+    if(v.length > 6) v = v.substring(0,4)+'-'+v.substring(4,6)+'-'+v.substring(6);
+    else if(v.length > 4) v = v.substring(0,4)+'-'+v.substring(4);
+    el.value = v;
+  }
+}
+
+
+function calcPreview(){
+  const amt=parseFloat(document.getElementById('f-amount').value)||0;
+  const won=r2w(amt);
+  const hr=parseInt(document.getElementById('f-hrate').value)||0;
+  const hc=Math.round(won*hr/100);
+  const intro=document.getElementById('f-introducer').value;
+  const wr=getRate(intro);
+  const wc=Math.round(won*wr/100);
+  const net=hc-wc;
+  document.getElementById('f-amount-hint').textContent=won>0?won.toLocaleString()+'원':'';
+  document.getElementById('fee-preview').innerHTML=won>0?
+    `결제금액 : <b>${won.toLocaleString()}원</b><br>
+     병원→FK 수수료 (${hr}%) : <b style="color:#16a34a">${hc.toLocaleString()}원</b><br>
+     FK→소개자 수수료 (${wr}%) : <b style="color:#7c3aed">${wc.toLocaleString()}원</b><br>
+     <span style="display:block;border-top:1px solid #eee;padding-top:4px;margin-top:2px;"></span>
+     FK 순매출 : <b style="color:#D4AF37;font-size:13px;">${net.toLocaleString()}원</b>`
+    :'금액을 입력하면 수수료가 자동 계산됩니다.';
+}
+
+
+// ── 방문횟수 계산 (이름+생년월일 기준) ──
+function visitInfo(b, allData){
+  if(!b.dob) return '';
+  const key = b.name.trim().toUpperCase()+'|'+b.dob;
+  // 이 예약보다 예약일시가 같거나 이전인 동일인 예약들
+  const samePersonAll = allData.filter(x=>
+    x.name.trim().toUpperCase()+'|'+x.dob === key
+  ).sort((a,c)=>a.datetime.localeCompare(c.datetime));
+  const rank = samePersonAll.findIndex(x=>x.id===b.id)+1;
+  const total = samePersonAll.length;
+  if(total<=1 && rank===1) return '<span style="font-size:9px;background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:8px;margin-left:4px;">초진</span>';
+  if(rank===1) return '<span style="font-size:9px;background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:8px;margin-left:4px;">초진</span>';
+  if(rank>=3) return `<span style="font-size:9px;background:#fce7f3;color:#9d174d;padding:1px 5px;border-radius:8px;margin-left:4px;">재진 ${rank}회</span>`;
+  return '<span style="font-size:9px;background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:8px;margin-left:4px;">재진</span>';
+}
+
+// ── 예약 명단 ──
+function ibadge(t){const m={왕홍:'wanghong',가이드:'guide',에이전시:'agency',중국사업부:'company',플랫폼:'company'};return`<span class="badge ${m[t]||''}">${t}</span>`;}
+
+function sortedBk(data){
+  return [...data].sort((a,b)=>{
+    let va,vb;
+    if(bkSortCol==='datetime'){va=new Date(a.datetime.replace(' ','T'));vb=new Date(b.datetime.replace(' ','T'));}
+    else if(bkSortCol==='amount'){va=a.amount;vb=b.amount;}
+    else{va=(a[bkSortCol]||'').toString();vb=(b[bkSortCol]||'').toString();}
+    if(va<vb)return bkSortAsc?-1:1;if(va>vb)return bkSortAsc?1:-1;return 0;
+  });
+}
+
+function sortBk(col){
+  if(bkSortCol===col)bkSortAsc=!bkSortAsc;else{bkSortCol=col;bkSortAsc=true;}
+  document.querySelectorAll('#bk-thead th').forEach(th=>{
+    th.classList.remove('sort-asc','sort-desc');
+    if(th.dataset.col===col)th.classList.add(bkSortAsc?'sort-asc':'sort-desc');
+  });
+  filterBookings();
+}
+
+function renderBk(data){
+  const sorted=sortedBk(data);
+  const tbody=document.getElementById('bk-tbody');tbody.innerHTML='';
+  let tW=0,tH=0,tWC=0,tN=0,tNS=0,tVatIn=0,tVatEx=0,tTax=0;
+  sorted.forEach((b,i)=>{
+    const c=calcC(b);tW+=c.won;tH+=c.hc;tWC+=c.wc;tN+=c.net;
+    if(b.noshow==='Y'||b.status==='노쇼'||b.status==='취소')tNS++;
+    if(b.vat==='별도')tVatEx+=c.hc; else tVatIn+=c.hc;
+    if(b.tax_invoice==='Y')tTax++;
+    const sc={확정:'confirmed',대기:'pending',완료:'completed',취소:'cancelled',노쇼:'noshow'}[b.status]||'pending';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="color:#ccc;">${i+1}</td>
+      <td style="font-weight:500;">${b.name}</td>
+      <td style="color:#888;font-size:10px;white-space:nowrap;">${b.dob||''}</td>
+      <td style="white-space:nowrap;">${visitInfo(b,BK)}</td>
+      <td style="text-align:center;">${b.gender||'-'}</td>
+      <td>${b.nationality||'중국'}</td>
+      <td><span style="font-size:10px;background:${b.hospital===STAR_HOSP?'#fffbf0':'#f0f0f0'};color:${b.hospital===STAR_HOSP?'#B8960C':'inherit'};padding:1px 6px;border-radius:3px;font-weight:${b.hospital===STAR_HOSP?'600':'400'};">${hospLabel(b.hospital)}</span></td>
+      <td style="white-space:nowrap;color:#555;">${b.datetime}</td>
+      <td style="font-size:10px;color:#888;">${b.dept||'-'}</td>
+      <td style="font-size:10px;color:#888;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${b.treatment}">${b.treatment||'-'}</td>
+      <td style="font-weight:500;color:${c.won>0?'#B8960C':'#ccc'};white-space:nowrap;">${c.won>0?c.won.toLocaleString()+'원':'-'}</td>
+      <td style="color:#aaa;white-space:nowrap;">${b.expected?r2w(b.expected).toLocaleString()+'원':'-'}</td>
+      <td>${ibadge(b.inflow_type)}</td>
+      <td style="font-size:11px;">${b.introducer||'-'}</td>
+      <td style="text-align:center;">${b.hosp_comm_rate?b.hosp_comm_rate+'%':'-'}</td>
+      <td style="white-space:nowrap;color:#16a34a;">${c.hc>0?c.hc.toLocaleString()+'원':'-'}</td>
+      <td style="white-space:nowrap;color:#7c3aed;">${c.wc>0?c.wc.toLocaleString()+'원':'-'}</td>
+      <td style="white-space:nowrap;font-weight:600;color:${c.net>0?'#D4AF37':c.net<0?'#dc2626':'#ccc'};">${c.won>0?c.net.toLocaleString()+'원':'-'}</td>
+      <td style="text-align:center;">${b.vat==='별도'?'<span class=\"badge pending\">별도</span>':'<span style=\"font-size:10px;color:#aaa;\">포함</span>'}</td>
+      <td style="text-align:center;">${b.tax_invoice==='Y'?'<span class=\"badge confirmed\">발행</span>':'<span style=\"font-size:10px;color:#aaa;\">-</span>'}</td>
+      <td style="font-size:10px;color:#888;">${b.hosp_paydate||'-'}</td>
+      <td style="white-space:nowrap;color:#555;">${b.hosp_paidamt?r2w(b.hosp_paidamt).toLocaleString()+'원':'-'}</td>
+      <td style="white-space:nowrap;color:#555;">${b.paid_comm?r2w(b.paid_comm).toLocaleString()+'원':'-'}</td>
+      <td><span class="badge ${sc}">${b.status}</span></td>
+      <td style="text-align:center;">${b.noshow==='Y'?'<span class="badge noshow">Y</span>':''}</td>
+      <td><button class="btn sm" onclick="openBkModal(${b.id})">편집</button></td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('st-total').textContent=data.length;
+  document.getElementById('st-rev').textContent=tW>0?tW.toLocaleString():'-';
+  document.getElementById('st-hcomm').textContent=tH>0?tH.toLocaleString():'-';
+  document.getElementById('st-wcomm').textContent=tWC>0?tWC.toLocaleString():'-';
+  document.getElementById('st-net').textContent=tN>0?tN.toLocaleString():'-';
+  document.getElementById('st-ns').textContent=tNS;
+  document.getElementById('st-vat-in').textContent=tVatIn>0?tVatIn.toLocaleString():'-';
+  document.getElementById('st-vat-ex').textContent=tVatEx>0?tVatEx.toLocaleString():'-';
+  document.getElementById('st-tax').textContent=tTax;
+}
+
+function filterBookings(){
+  const q=document.getElementById('bk-search').value.toLowerCase();
+  const hosp=document.getElementById('bk-hosp').value;
+  const inflow=document.getElementById('bk-inflow').value;
+  const month=document.getElementById('bk-month').value;
+  const status=document.getElementById('bk-status').value;
+  renderBk(BK.filter(b=>{
+    const mq=!q||b.name.toLowerCase().includes(q)||b.hospital.toLowerCase().includes(q)||(b.introducer||'').toLowerCase().includes(q);
+    return mq&&(!hosp||b.hospital===hosp)&&(!inflow||b.inflow_type===inflow)&&(!month||b.datetime.startsWith(month))&&(!status||b.status===status);
+  }));
+}
+
+// ── 예약 모달 ──
+function openBkModal(id){
+  bkEditId=id||null;
+  document.getElementById('bk-del-btn').style.display=id?'':'none';
+  document.getElementById('bk-modal-title').textContent=id?'예약 수정':'신규 예약 등록';
+  if(id){
+    const b=BK.find(x=>x.id===id);if(!b)return;
+    document.getElementById('f-name').value=b.name;
+    document.getElementById('f-hospital').value=b.hospital;
+    document.getElementById('f-datetime').value=b.datetime.replace(' ','T');
+    document.getElementById('f-dept').value=b.dept||'피부';
+    document.getElementById('f-gender').value=b.gender||'F';
+    document.getElementById('f-dob').value=b.dob||'';
+    document.getElementById('f-nationality').value=b.nationality||'중국';
+    document.getElementById('f-treatment').value=b.treatment||'';
+    document.getElementById('f-amount').value=b.amount||'';
+    document.getElementById('f-expected').value=b.expected||'';
+    document.getElementById('f-hrate').value=b.hosp_comm_rate||20;
+    document.getElementById('f-hpaydate').value=b.hosp_paydate||'';
+    document.getElementById('f-hpaidamt').value=b.hosp_paidamt||'';
+    document.getElementById('f-paidcomm').value=b.paid_comm||'';
+    document.getElementById('f-inflow-type').value=b.inflow_type||'왕홍';
+    updateInflowSel();
+    document.getElementById('f-introducer').value=b.introducer||'';
+    document.getElementById('f-status').value=b.status;
+    document.getElementById('f-noshow').value=b.noshow||'N';
+    document.getElementById('f-vat').value=b.vat||'포함';
+    document.getElementById('f-tax-invoice').value=b.tax_invoice||'N';
+    document.getElementById('f-note').value=b.note||'';
+    calcPreview();
+  }else{
+    ['f-name','f-treatment','f-note','f-hpaydate'].forEach(i=>document.getElementById(i).value='');
+    ['f-amount','f-expected','f-hpaidamt','f-paidcomm'].forEach(i=>document.getElementById(i).value='');document.getElementById('f-dob').value='';
+    document.getElementById('f-nationality').value='중국';
+    document.getElementById('f-vat').value='포함';
+    document.getElementById('f-tax-invoice').value='N';
+    document.getElementById('f-inflow-type').value='왕홍';
+    updateInflowSel();
+    document.getElementById('fee-preview').innerHTML='금액을 입력하면 수수료가 자동 계산됩니다.';
+    document.getElementById('f-amount-hint').textContent='';
+  }
+  document.getElementById('bk-modal').classList.add('open');
+}
+
+function saveBk(){
+  const obj={
+    name:document.getElementById('f-name').value.trim().toUpperCase(),
+    hospital:document.getElementById('f-hospital').value,
+    datetime:document.getElementById('f-datetime').value.replace('T',' '),
+    dept:document.getElementById('f-dept').value,
+    gender:document.getElementById('f-gender').value,
+    dob:document.getElementById('f-dob').value||'',
+    nationality:document.getElementById('f-nationality').value||'중국',
+    treatment:document.getElementById('f-treatment').value.trim(),
+    amount:parseFloat(document.getElementById('f-amount').value)||0,
+    expected:parseFloat(document.getElementById('f-expected').value)||0,
+    hosp_comm_rate:parseInt(document.getElementById('f-hrate').value)||0,
+    hosp_paydate:document.getElementById('f-hpaydate').value,
+    hosp_paidamt:parseFloat(document.getElementById('f-hpaidamt').value)||0,
+    paid_comm:parseFloat(document.getElementById('f-paidcomm').value)||0,
+    inflow_type:document.getElementById('f-inflow-type').value,
+    introducer:document.getElementById('f-introducer').value,
+    status:document.getElementById('f-status').value,
+    noshow:document.getElementById('f-noshow').value,
+    vat:document.getElementById('f-vat').value||'포함',
+    tax_invoice:document.getElementById('f-tax-invoice').value||'N',
+    note:document.getElementById('f-note').value.trim(),
+  };
+  if(!obj.name){alert('환자명을 입력하세요');return;}
+  if(bkEditId){const i=BK.findIndex(b=>b.id===bkEditId);BK[i]={...BK[i],...obj};}
+  else{obj.id=BK.reduce((m,b)=>Math.max(m,b.id),0)+1;BK.push(obj);}
+  closeModal('bk-modal');filterBookings();refreshAll();
+}
+
+function deleteBk(){
+  if(!bkEditId||!confirm('이 예약을 삭제하시겠습니까?'))return;
+  BK=BK.filter(b=>b.id!==bkEditId);
+  closeModal('bk-modal');filterBookings();refreshAll();
+}
+
+// ── 캘린더 ──
+function renderCalendar(){
+  const ml=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  document.getElementById('cal-title').textContent=`${calY}년 ${ml[calM]}`;
+  const grid=document.getElementById('cal-grid');grid.innerHTML='';
+  document.getElementById('cal-detail').style.display='none';
+  const first=new Date(calY,calM,1).getDay();
+  const days=new Date(calY,calM+1,0).getDate();
+  const byDay={};
+  BK.forEach(b=>{const d=b.datetime.substring(0,10);if(!byDay[d])byDay[d]=[];byDay[d].push(b);});
+  for(let i=0;i<first;i++){const d=document.createElement('div');d.style.minHeight='58px';grid.appendChild(d);}
+  for(let d=1;d<=days;d++){
+    const ds=`${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const items=byDay[ds]||[];
+    const div=document.createElement('div');
+    div.style.cssText=`padding:6px;min-height:58px;border:1px solid #e8e8e8;border-radius:4px;cursor:pointer;background:${items.length?'#fffbf0':'#fff'};`;
+    div.innerHTML=`<div style="font-size:12px;font-weight:${items.length?600:400};margin-bottom:3px;">${d}</div>`;
+    if(items.length)div.innerHTML+=`<div style="font-size:10px;background:#D4AF37;color:#fff;padding:1px 5px;border-radius:8px;display:inline-block;">${items.length}건</div>`;
+    div.onclick=()=>{
+      document.getElementById('cal-detail').style.display='block';
+      document.getElementById('cal-detail').innerHTML=`<b style="font-size:12px;">${ds} (${items.length}건)</b><br><br>`+
+      items.map(b=>{const c=calcC(b);return`<div style="display:flex;gap:8px;align-items:center;padding:6px;background:#fafaf8;border-radius:4px;margin-bottom:4px;">
+        <span style="font-weight:500;min-width:130px;font-size:11px;">${b.name}</span>
+        <span style="font-size:10px;background:#f0f0f0;padding:1px 5px;border-radius:3px;">${b.hospital}</span>
+        <span style="font-size:10px;color:#888;">${b.datetime.split(' ')[1]||''}</span>
+        ${ibadge(b.inflow_type)}
+        <span style="font-size:10px;color:#555;flex:1;">${b.treatment||'-'}</span>
+        <span style="font-size:10px;color:#B8960C;">${c.won>0?c.won.toLocaleString()+'원':''}</span>
+        <span class="badge ${{확정:'confirmed',완료:'completed',노쇼:'noshow',취소:'cancelled',대기:'pending'}[b.status]||'pending'}">${b.status}</span>
+      </div>`;}).join('');
+    };
+    grid.appendChild(div);
+  }
+}
+function changeMonth(d){calM+=d;if(calM>11){calM=0;calY++;}if(calM<0){calM=11;calY--;}renderCalendar();}
+
+// ── 구분별 분석 ──
+function renderAnalysis(sub){
+  curAnaSub=sub;
+  const el=document.getElementById('analysis-content');
+  const typeMap={왕홍별:'왕홍',가이드별:'가이드',에이전시별:'에이전시',회사별:'company'};
+  const tf=typeMap[sub];
+  const map={};
+  BK.forEach(b=>{
+    const match=tf==='company'?(b.inflow_type==='중국사업부'||b.inflow_type==='플랫폼'):(b.inflow_type===tf);
+    if(!match)return;
+    const key=tf==='company'?b.inflow_type:b.introducer;
+    if(!map[key])map[key]={cnt:0,treat:0,won:0,hc:0,wc:0,net:0,ns:0,hosps:new Set(),last:''};
+    const c=calcC(b);map[key].cnt++;map[key].won+=c.won;map[key].hc+=c.hc;map[key].wc+=c.wc;map[key].net+=c.net;
+    if(b.status==='완료')map[key].treat++;
+    if(b.noshow==='Y'||b.status==='노쇼')map[key].ns++;
+    map[key].hosps.add(b.hospital);
+    if(b.datetime>map[key].last)map[key].last=b.datetime.substring(0,10);
+  });
+  if(!Object.keys(map).length){el.innerHTML='<div style="color:#aaa;padding:20px;">해당 구분 데이터가 없습니다.</div>';return;}
+  let html=`<div style="overflow-x:auto;"><table><thead><tr>
+    <th>${sub==='회사별'?'구분':'소개자'}</th><th>예약건수</th><th>시술건수</th><th>총 결제금액</th>
+    <th>병원→FK 수수료</th><th>FK→소개자 수수료</th>
+    <th style="background:#fffbf0;">FK 순매출</th>
+    <th>노쇼</th><th>시술전환율</th><th>주요 병원</th><th>최근 예약일</th>
+  </tr></thead><tbody>`;
+  Object.entries(map).sort((a,b)=>b[1].won-a[1].won).forEach(([name,v])=>{
+    const conv=v.cnt?Math.round(v.treat/v.cnt*100):0;
+    html+=`<tr>
+      <td style="font-weight:500;">${name}</td><td style="text-align:center;">${v.cnt}</td><td style="text-align:center;">${v.treat}</td>
+      <td style="color:#B8960C;white-space:nowrap;">${v.won>0?v.won.toLocaleString()+'원':'-'}</td>
+      <td style="color:#16a34a;white-space:nowrap;">${v.hc>0?v.hc.toLocaleString()+'원':'-'}</td>
+      <td style="color:#7c3aed;white-space:nowrap;">${v.wc>0?v.wc.toLocaleString()+'원':'-'}</td>
+      <td style="font-weight:600;color:#D4AF37;white-space:nowrap;background:#fffbf0;">${v.won>0?v.net.toLocaleString()+'원':'-'}</td>
+      <td style="text-align:center;color:${v.ns?'#dc2626':'#aaa'};">${v.ns||'-'}</td>
+      <td style="text-align:center;">${conv}%</td>
+      <td style="font-size:10px;color:#666;">${[...v.hosps].join(', ')}</td>
+      <td style="font-size:10px;color:#888;">${v.last}</td>
+    </tr>`;
+  });
+  el.innerHTML=html+`</tbody></table></div>`;
+}
+
+// ── 일일·월 현황 ──
+function renderDaily(sub){
+  curDailySub=sub;
+  const totWon=BK.reduce((s,b)=>s+r2w(b.amount),0);
+  const totNet=BK.reduce((s,b)=>s+calcC(b).net,0);
+  const treated=BK.filter(b=>b.status==='완료').length;
+  document.getElementById('daily-stats').innerHTML=`
+    <div class="sc"><div class="sl">전체 예약인원</div><div class="sv">${BK.length}</div></div>
+    <div class="sc green"><div class="sl">시술인원(완료)</div><div class="sv">${treated}</div></div>
+    <div class="sc gold"><div class="sl">매출합계</div><div class="sv">${totWon>0?totWon.toLocaleString():'-'}</div><div class="ss">원</div></div>
+    <div class="sc blue"><div class="sl">FK 순매출</div><div class="sv">${totNet>0?totNet.toLocaleString():'-'}</div><div class="ss">원</div></div>`;
+  const el=document.getElementById('daily-content');
+  if(sub==='일별'){
+    const map={};
+    BK.forEach(b=>{
+      const d=b.datetime.substring(0,10);
+      if(!map[d])map[d]={cnt:0,treat:0,won:0,net:0,ns:0};
+      const c=calcC(b);map[d].cnt++;map[d].won+=c.won;map[d].net+=c.net;
+      if(b.status==='완료')map[d].treat++;
+      if(b.noshow==='Y'||b.status==='노쇼')map[d].ns++;
+    });
+    let html=`<div style="overflow-x:auto;"><table><thead><tr>
+      <th>날짜</th><th>예약인원</th><th>시술인원</th><th>매출합계</th><th>FK 순매출</th><th>노쇼</th>
+    </tr></thead><tbody>`;
+    Object.entries(map).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([d,v])=>{
+      html+=`<tr><td style="white-space:nowrap;">${d}</td><td style="text-align:center;">${v.cnt}</td><td style="text-align:center;">${v.treat}</td>
+        <td style="color:#B8960C;white-space:nowrap;">${v.won>0?v.won.toLocaleString()+'원':'-'}</td>
+        <td style="color:#D4AF37;white-space:nowrap;">${v.won>0?v.net.toLocaleString()+'원':'-'}</td>
+        <td style="text-align:center;color:${v.ns?'#dc2626':'#aaa'};">${v.ns||'-'}</td></tr>`;
+    });
+    el.innerHTML=html+`</tbody></table></div>`;
+  }else{
+    const map={};
+    BK.forEach(b=>{
+      const m=b.datetime.substring(0,7);
+      if(!map[m])map[m]={cnt:0,treat:0,won:0,net:0,ns:0};
+      const c=calcC(b);map[m].cnt++;map[m].won+=c.won;map[m].net+=c.net;
+      if(b.status==='완료')map[m].treat++;
+      if(b.noshow==='Y'||b.status==='노쇼')map[m].ns++;
+    });
+    let cumW=0,cumN=0;
+    let html=`<div style="overflow-x:auto;"><table><thead><tr>
+      <th>월</th><th>예약인원</th><th>시술인원</th><th>월 매출</th><th>월 FK순매출</th><th>누적 매출</th><th>누적 FK순매출</th><th>노쇼</th><th>시술전환율</th>
+    </tr></thead><tbody>`;
+    Object.entries(map).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([m,v])=>{
+      cumW+=v.won;cumN+=v.net;
+      const conv=v.cnt?Math.round(v.treat/v.cnt*100):0;
+      html+=`<tr><td>${m}</td><td style="text-align:center;">${v.cnt}</td><td style="text-align:center;">${v.treat}</td>
+        <td style="color:#B8960C;white-space:nowrap;">${v.won>0?v.won.toLocaleString()+'원':'-'}</td>
+        <td style="color:#D4AF37;white-space:nowrap;">${v.won>0?v.net.toLocaleString()+'원':'-'}</td>
+        <td style="color:#16a34a;white-space:nowrap;">${cumW>0?cumW.toLocaleString()+'원':'-'}</td>
+        <td style="color:#D4AF37;white-space:nowrap;font-weight:600;">${cumW>0?cumN.toLocaleString()+'원':'-'}</td>
+        <td style="text-align:center;color:${v.ns?'#dc2626':'#aaa'};">${v.ns||'-'}</td>
+        <td style="text-align:center;">${conv}%</td></tr>`;
+    });
+    el.innerHTML=html+`</tbody></table></div>`;
+  }
+}
+
+// ── 병원 현황 ──
+function renderCatFilters(){
+  const row=document.getElementById('cat-filter-row');
+  if(row.children.length)return;
+  row.innerHTML='<button class="cat-chip active" onclick="setCat(\'\',this)">전체</button>';
+  Object.keys(CATS).forEach(c=>{const btn=document.createElement('button');btn.className='cat-chip';btn.textContent=c;btn.onclick=()=>setCat(c,btn);row.appendChild(btn);});
+}
+function setCat(cat,el){activeCat=cat;document.querySelectorAll('.cat-chip').forEach(b=>b.classList.remove('active'));el.classList.add('active');filterHospitals();}
+function filterHospitals(){
+  const contract=document.getElementById('h-contract').value;
+  let data=HD.filter(h=>!contract||h.contract===contract);
+  if(activeCat){const ch=CATS[activeCat]||[];data=data.filter(h=>ch.some(c=>h.name.includes(c.substring(0,4))||c.includes(h.name.substring(0,4))));}
+  const grid=document.getElementById('hospital-grid');grid.innerHTML='';
+  data.forEach(h=>{
+    const cc={계약완료:'contract',협의중:'negotiating',미정:'undecided'}[h.contract]||'undecided';
+    const cats=Object.entries(CATS).filter(([c,hs])=>hs.some(hn=>h.name.includes(hn.substring(0,4))||hn.includes(h.name.substring(0,4)))).map(([c])=>c);
+    const div=document.createElement('div');div.className='hcard';
+    div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+      <div><div class="hn">${h.name}</div><div class="hd">${h.dept}</div></div>
+      <span class="badge ${cc}">${h.contract}</span></div>
+      <div class="hcats">${cats.map(c=>`<span class="cat-tag">${c}</span>`).join('')}</div>
+      <div class="hinfo">
+        <span><span class="lbl">담당자</span>${h.manager}</span>
+        <span><span class="lbl">연락처</span>${h.tel}</span>
+        <span><span class="lbl">수수료</span><b style="color:#B8960C;">${h.commission}</b></span>
+        ${h.paydate?`<span><span class="lbl">지급일</span>${h.paydate}</span>`:''}
+      </div>`;
+    grid.appendChild(div);
+  });
+}
+
+// ── 병원별 매출/입금 ──
+function sortHR(col){
+  if(hrSort.col===col)hrSort.asc=!hrSort.asc;else{hrSort.col=col;hrSort.asc=false;}
+  document.querySelectorAll('#page-hospital_rev th').forEach(th=>{
+    th.classList.remove('sort-asc','sort-desc');
+    if(th.dataset.col===col)th.classList.add(hrSort.asc?'sort-asc':'sort-desc');
+  });
+  renderHR();
+}
+function renderHR(){
+  const map={};
+  BK.forEach(b=>{
+    if(!map[b.hospital])map[b.hospital]={cnt:0,rev:0,comm:0,hospay:0,paid:0};
+    const c=calcC(b);map[b.hospital].cnt++;map[b.hospital].rev+=c.won;map[b.hospital].comm+=c.hc;
+    map[b.hospital].hospay+=c.hospPay;map[b.hospital].paid+=r2w(b.hosp_paidamt);
+  });
+  const rows=Object.entries(map).map(([n,v])=>({name:n,...v,unpaid:v.hospay-v.paid}));
+  const{col,asc}=hrSort;
+  rows.sort((a,b)=>{const d=asc?1:-1;return a[col]>b[col]?d:-d;});
+  document.getElementById('hr-total').textContent=fw(rows.reduce((s,r)=>s+r.rev,0));
+  document.getElementById('hr-comm').textContent=fw(rows.reduce((s,r)=>s+r.comm,0));
+  document.getElementById('hr-hospay').textContent=fw(rows.reduce((s,r)=>s+r.hospay,0));
+  document.getElementById('hr-unpaid').textContent=fw(rows.reduce((s,r)=>s+r.unpaid,0));
+  const tbody=document.getElementById('hr-tbody');tbody.innerHTML='';
+  rows.forEach(r=>{
+    const hd=HD.find(h=>h.name===r.name);
+    const pd=hd?hd.paydate:'-';
+    const st=r.unpaid<=0&&r.paid>0?'<span class="badge confirmed">완료</span>':r.paid>0?'<span class="badge pending">부분</span>':'<span class="badge undecided">미입금</span>';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="font-size:11px;font-weight:500;">${r.name}</td><td style="text-align:center;">${r.cnt}건</td>
+      <td style="color:#B8960C;white-space:nowrap;">${r.rev>0?r.rev.toLocaleString()+'원':'-'}</td>
+      <td style="text-align:center;font-size:10px;color:#888;">-</td>
+      <td style="color:#16a34a;white-space:nowrap;">${r.comm>0?r.comm.toLocaleString()+'원':'-'}</td>
+      <td style="white-space:nowrap;">${r.hospay>0?r.hospay.toLocaleString()+'원':'-'}</td>
+      <td style="font-size:10px;color:#888;">${pd}</td>
+      <td style="white-space:nowrap;color:#555;">${r.paid>0?r.paid.toLocaleString()+'원':'-'}</td>
+      <td style="white-space:nowrap;color:${r.unpaid>0?'#dc2626':'#16a34a'};">${r.unpaid>0?r.unpaid.toLocaleString()+'원':'-'}</td>
+      <td>${st}</td>`;
+    tbody.appendChild(tr);
+  });
+  const dtbody=document.getElementById('hr-detail-tbody');dtbody.innerHTML='';
+  [...BK].sort((a,b)=>a.datetime.localeCompare(b.datetime)).forEach(b=>{
+    const c=calcC(b);if(c.won===0)return;
+    const unpaid=c.hospPay-r2w(b.hosp_paidamt);
+    const st=unpaid<=0&&b.hosp_paidamt>0?'<span class="badge confirmed">완료</span>':b.hosp_paidamt>0?'<span class="badge pending">부분</span>':'<span class="badge undecided">미입금</span>';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${b.name}</td><td style="font-size:10px;">${b.hospital}</td>
+      <td style="font-size:10px;color:#888;">${b.datetime.substring(0,10)}</td>
+      <td style="white-space:nowrap;color:#B8960C;">${c.won.toLocaleString()}원</td>
+      <td style="text-align:center;">${b.hosp_comm_rate}%</td>
+      <td style="white-space:nowrap;color:#16a34a;">${c.hc>0?c.hc.toLocaleString()+'원':'-'}</td>
+      <td style="font-size:10px;color:#888;">${b.hosp_paydate||'-'}</td>
+      <td style="white-space:nowrap;">${b.hosp_paidamt?r2w(b.hosp_paidamt).toLocaleString()+'원':'-'}</td>
+      <td style="white-space:nowrap;color:${unpaid>0?'#dc2626':'#16a34a'};">${unpaid>0?unpaid.toLocaleString()+'원':'-'}</td>
+      <td>${st}</td>`;
+    dtbody.appendChild(tr);
+  });
+}
+
+// ── 외국인환자 보고 ──
+function renderForeign(){
+  const total=BK.length,reserved=BK.filter(b=>b.status!=='취소').length,treated=BK.filter(b=>b.status==='완료').length;
+  const totW=BK.reduce((s,b)=>s+r2w(b.amount),0),totN=BK.reduce((s,b)=>s+calcC(b).net,0);
+  document.getElementById('fg-inquiry').textContent=total;
+  document.getElementById('fg-reserved').textContent=reserved;
+  document.getElementById('fg-treated').textContent=treated;
+  document.getElementById('fg-rev').textContent=totW>0?totW.toLocaleString()+'원':'-';
+  document.getElementById('fg-net').textContent=totN>0?totN.toLocaleString()+'원':'-';
+  document.getElementById('fg-conv1').textContent=(total?Math.round(reserved/total*100):0)+'%';
+  document.getElementById('fg-conv2').textContent=(reserved?Math.round(treated/reserved*100):0)+'%';
+  const mm={};BK.forEach(b=>{const m=b.datetime.substring(0,7);if(!mm[m])mm[m]={res:0,treat:0,won:0,net:0,ns:0};const c=calcC(b);mm[m].res++;mm[m].won+=c.won;mm[m].net+=c.net;if(b.status==='완료')mm[m].treat++;if(b.noshow==='Y'||b.status==='노쇼')mm[m].ns++;});
+  let cumW=0,cumN=0,mhtml='';
+  Object.entries(mm).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([m,v])=>{cumW+=v.won;cumN+=v.net;mhtml+=`<tr><td>${m}</td><td style="text-align:center;">-</td><td style="text-align:center;">${v.res}</td><td style="text-align:center;">${v.treat}</td><td style="white-space:nowrap;color:#B8960C;">${v.won>0?v.won.toLocaleString()+'원':'-'}</td><td style="white-space:nowrap;color:#D4AF37;">${v.won>0?v.net.toLocaleString()+'원':'-'}</td><td style="text-align:center;color:${v.ns?'#dc2626':'#aaa'};">${v.ns||'-'}</td></tr>`;});
+  document.getElementById('fg-monthly-tbody').innerHTML=mhtml;
+  const im={};BK.forEach(b=>{const k=b.inflow_type;if(!im[k])im[k]={subs:new Set(),cnt:0,treat:0,won:0,net:0};im[k].subs.add(b.introducer);im[k].cnt++;const c=calcC(b);im[k].won+=c.won;im[k].net+=c.net;if(b.status==='완료')im[k].treat++;});
+  document.getElementById('fg-inflow-tbody').innerHTML=Object.entries(im).sort((a,b)=>b[1].cnt-a[1].cnt).map(([k,v])=>`<tr><td>${ibadge(k)}</td><td style="font-size:10px;color:#666;">${[...v.subs].filter(Boolean).join(', ')}</td><td style="text-align:center;">${v.cnt}</td><td style="text-align:center;">${v.treat}</td><td style="white-space:nowrap;color:#B8960C;">${v.won>0?v.won.toLocaleString()+'원':'-'}</td><td style="white-space:nowrap;color:#D4AF37;">${v.won>0?v.net.toLocaleString()+'원':'-'}</td></tr>`).join('');
+  const nm={};BK.forEach(b=>{const n=b.nationality||'미상';if(!nm[n])nm[n]={cnt:0,treat:0,won:0};nm[n].cnt++;nm[n].won+=r2w(b.amount);if(b.status==='완료')nm[n].treat++;});
+  document.getElementById('fg-nation-tbody').innerHTML=Object.entries(nm).sort((a,b)=>b[1].cnt-a[1].cnt).map(([n,v])=>`<tr><td>${n}</td><td style="text-align:center;">${v.cnt}</td><td style="text-align:center;">${v.treat}</td><td style="white-space:nowrap;color:#B8960C;">${v.won>0?v.won.toLocaleString()+'원':'-'}</td><td style="text-align:center;">${total?Math.round(v.cnt/total*100):0}%</td></tr>`).join('');
+  const dm={};BK.forEach(b=>{const d=b.dept||'기타';if(!dm[d])dm[d]={cnt:0,treat:0,won:0,ts:new Set()};dm[d].cnt++;dm[d].won+=r2w(b.amount);if(b.treatment)b.treatment.split('、').forEach(t=>dm[d].ts.add(t.trim()));if(b.status==='완료')dm[d].treat++;});
+  document.getElementById('fg-dept-tbody').innerHTML=Object.entries(dm).sort((a,b)=>b[1].cnt-a[1].cnt).map(([d,v])=>`<tr><td>${d}</td><td style="text-align:center;">${v.cnt}</td><td style="text-align:center;">${v.treat}</td><td style="white-space:nowrap;color:#B8960C;">${v.won>0?v.won.toLocaleString()+'원':'-'}</td><td style="font-size:10px;color:#666;">${[...v.ts].slice(0,3).join(', ')}</td></tr>`).join('');
+}
+
+// ── 왕홍·소개자 관리 ──
+function renderWm(){
+  const tbody=document.getElementById('wm-tbody');tbody.innerHTML='';
+  WM.forEach(w=>{
+    const bks=BK.filter(b=>b.introducer===w.name);
+    const totW=bks.reduce((s,b)=>s+r2w(b.amount),0);
+    const totN=bks.reduce((s,b)=>s+calcC(b).net,0);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="font-weight:500;">${w.name}</td><td>${ibadge(w.type)}</td>
+      <td style="font-size:11px;color:#888;">${w.channel||'-'}</td>
+      <td style="font-size:11px;color:#888;">${w.contact||'-'}</td>
+      <td style="text-align:center;color:#7c3aed;font-weight:600;">${w.rate}%</td>
+      <td style="text-align:center;">${bks.length}명</td>
+      <td style="white-space:nowrap;color:#B8960C;">${totW>0?totW.toLocaleString()+'원':'-'}</td>
+      <td style="white-space:nowrap;color:#D4AF37;">${totN>0?totN.toLocaleString()+'원':'-'}</td>
+      <td><button class="btn sm" onclick="openWmModal(${w.id})">편집</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+function openWmModal(id){
+  wmEditId=id||null;
+  document.getElementById('wm-modal-title').textContent=id?'소개자 수정':'소개자 추가';
+  document.getElementById('wm-del-btn').style.display=id?'':'none';
+  if(id){const w=WM.find(x=>x.id===id);if(!w)return;document.getElementById('wm-name').value=w.name;document.getElementById('wm-type').value=w.type;document.getElementById('wm-channel').value=w.channel||'';document.getElementById('wm-contact').value=w.contact||'';document.getElementById('wm-rate').value=w.rate;document.getElementById('wm-note').value=w.note||'';}
+  else{['wm-name','wm-channel','wm-contact','wm-note'].forEach(i=>document.getElementById(i).value='');document.getElementById('wm-rate').value='';}
+  document.getElementById('wm-modal').classList.add('open');
+}
+function saveWm(){
+  const obj={name:document.getElementById('wm-name').value.trim(),type:document.getElementById('wm-type').value,channel:document.getElementById('wm-channel').value.trim(),contact:document.getElementById('wm-contact').value.trim(),rate:parseInt(document.getElementById('wm-rate').value)||0,note:document.getElementById('wm-note').value.trim()};
+  if(!obj.name){alert('이름을 입력하세요');return;}
+  if(wmEditId){const i=WM.findIndex(w=>w.id===wmEditId);WM[i]={...WM[i],...obj};}
+  else{obj.id=WM.reduce((m,w)=>Math.max(m,w.id),0)+1;WM.push(obj);}
+  closeModal('wm-modal');renderWm();updateInflowSel();
+}
+function deleteWm(){
+  if(!wmEditId||!confirm('삭제하시겠습니까?'))return;
+  WM=WM.filter(w=>w.id!==wmEditId);closeModal('wm-modal');renderWm();updateInflowSel();
+}
+
+// ── 대시보드 ──
+function makeBar(id,labels,values,color='#D4AF37'){
+  const el=document.getElementById(id);if(!el)return;
+  const max=Math.max(...values,1);el.innerHTML='';
+  labels.forEach((l,i)=>{
+    const h=Math.round((values[i]/max)*100);
+    const dv=values[i]>=10000?Math.round(values[i]/10000)+'만':values[i];
+    const col=document.createElement('div');col.className='bcol';
+    col.innerHTML=`<div class="bval">${dv}</div><div class="bar" style="height:${h}px;background:${color};"></div><div class="blbl">${l}</div>`;
+    el.appendChild(col);
+  });
+}
+function renderDashboard(){
+  const totW=BK.reduce((s,b)=>s+r2w(b.amount),0),totN=BK.reduce((s,b)=>s+calcC(b).net,0);
+  document.getElementById('db-rev').textContent=totW>0?totW.toLocaleString()+'원':'-';
+  document.getElementById('db-cnt').textContent=BK.length;
+  document.getElementById('db-net').textContent=totN>0?totN.toLocaleString()+'원':'-';
+  document.getElementById('db-wang').textContent=new Set(BK.map(b=>b.introducer)).size;
+  const hm={},mm={},wm={},hnm={};
+  BK.forEach(b=>{hm[b.hospital]=(hm[b.hospital]||0)+1;hnm[b.hospital]=(hnm[b.hospital]||0)+calcC(b).net;const mo=b.datetime.substring(5,7)+'월';mm[mo]=(mm[mo]||0)+1;wm[b.introducer||'-']=(wm[b.introducer||'-']||0)+1;});
+  const he=Object.entries(hm).sort((a,b)=>b[1]-a[1]).slice(0,7);
+  makeBar('ch-hosp',he.map(e=>e[0].substring(0,4)),he.map(e=>e[1]));
+  const me=Object.entries(mm).sort((a,b)=>a[0].localeCompare(b[0]));
+  makeBar('ch-month',me.map(e=>e[0]),me.map(e=>e[1]),'#4f86c6');
+  const we=Object.entries(wm).sort((a,b)=>b[1]-a[1]).slice(0,7);
+  makeBar('ch-wang',we.map(e=>e[0]),we.map(e=>e[1]),'#7c3aed');
+  const hne=Object.entries(hnm).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  makeBar('ch-net',hne.map(e=>e[0].substring(0,4)),hne.map(e=>e[1]),'#D4AF37');
+}
+
+// ── 엑셀 ──
+function exportExcel(){
+  const wb=XLSX.utils.book_new();
+  const hdr=['No.','환자명','성별','생년월일','국적','예약병원','예약일시','진료과목','주요시술',
+    '결제금액(원)','예상시술액(원)','유입구분','소개자','병원수수료율(%)','병원→FK수수료(원)',
+    'FK→소개자수수료(원)','FK순매출(원)','부가세조건','세금계산서발행','병원입금일','병원입금액(원)','지급수수료액(원)','상태','노쇼','취소','비고'];
+  const rows=[hdr];
+  [...BK].sort((a,b)=>a.datetime.localeCompare(b.datetime)).forEach((b,i)=>{
+    const c=calcC(b);
+    rows.push([i+1,b.name,b.gender,b.dob||''  ,b.nationality,b.hospital,b.datetime,b.dept,b.treatment,
+      c.won,b.expected?r2w(b.expected):0,b.inflow_type,b.introducer,b.hosp_comm_rate,
+      c.hc,c.wc,c.net,b.hosp_paydate,r2w(b.hosp_paidamt),r2w(b.paid_comm),
+      b.vat||'포함',b.tax_invoice==='Y'?'Y':'',b.status,b.noshow==='Y'?'Y':'',b.status==='취소'?'Y':'',b.note]);
+  });
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb,ws,'예약명단');
+  const wr=[['이름','구분','채널','연락처','수수료율(%)','비고']];
+  WM.forEach(w=>wr.push([w.name,w.type,w.channel,w.contact,w.rate,w.note]));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(wr),'왕홍소개자');
+  const hr=[['No.','병원명','진료과목','담당자','연락처','계약상태','수수료','부가세','지급일']];
+  HD.forEach(h=>hr.push([h.no,h.name,h.dept,h.manager,h.tel,h.contract,h.commission,h.vat,h.paydate]));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(hr),'병원마스터');
+  XLSX.writeFile(wb,'팔로우코리아_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+
+// ── 공통 ──
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function showSub(page,sub,el){
+  document.querySelectorAll(`#page-${page} .subtab`).forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  if(page==='analysis')renderAnalysis(sub);
+  if(page==='daily')renderDaily(sub);
+}
+function refreshAll(){
+  renderAnalysis(curAnaSub);renderDaily(curDailySub);renderHR();renderForeign();renderDashboard();renderWm();
+}
+function showPage(id,tab){
+  document.querySelectorAll('.page-section').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  const pg=document.getElementById('page-'+id);if(pg)pg.classList.add('active');
+  if(tab)tab.classList.add('active');
+  if(id==='calendar')renderCalendar();
+  if(id==='hospitals'){renderCatFilters();filterHospitals();}
+  if(id==='analysis')renderAnalysis(curAnaSub);
+  if(id==='daily')renderDaily(curDailySub);
+  if(id==='hospital_rev')renderHR();
+  if(id==='foreign')renderForeign();
+  if(id==='dashboard')renderDashboard();
+  if(id==='wanghong_mgmt')renderWm();
+}
+
+init();
+</script>
+</body>
+</html>
